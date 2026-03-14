@@ -1,38 +1,16 @@
-// redis.js — mock, replace with real Redis client later
-const store = {};
-const locks = {};
+// redis.js — real Redis connection
+const { createClient } = require('redis');
+require('dotenv').config();
 
-const client = {
-  get: async (key) => store[key] ?? null,
+const client = createClient({
+  socket: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379,
+  }
+});
 
-  set: async (key, value, opts = {}) => {
-    if (opts.NX && locks[key]) return null; // NX = only set if not exists
-    store[key] = String(value);
-    locks[key] = true;
-    if (opts.EX) {
-      setTimeout(() => {
-        delete store[key];
-        delete locks[key];
-      }, opts.EX * 1000);
-    }
-    return 'OK';
-  },
+client.on('error', (err) => console.error('Redis error:', err));
 
-  del: async (key) => {
-    delete store[key];
-    delete locks[key];
-  },
-
-  eval: async (script, { keys }) => {
-    const key = keys[0];
-    const stock = parseInt(store[key] ?? '0');
-    if (stock <= 0) return -1;
-    store[key] = String(stock - 1);
-    return stock - 1;
-  },
-
-  // expose for inspection during dev
-  _store: store,
-};
+client.connect();
 
 module.exports = client;
