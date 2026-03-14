@@ -1,12 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
 const redis = require('../redis');
-const pool = require('../db');
+const { query } = require('../db');
 
 const INVENTORY_KEY = (productId) => `inventory:${productId}`;
-const USER_LOCK_KEY = (userId, productId) => `lock:${userId}:${productId}`;
 
-// Lua script — atomic check + decrement. Runs as one unit on Redis.
-// Returns -1 if sold out, else returns remaining stock.
 const LUA_DECR = `
   local stock = tonumber(redis.call('GET', KEYS[1]))
   if stock == nil or stock <= 0 then
@@ -16,39 +13,56 @@ const LUA_DECR = `
 `;
 
 exports.checkout = async (req, res) => {
-  const { userId, productId, size } = req.body;
+  const { productId, size } = req.body;
+  const userId = req.user.id;
 
-  if (!userId || !productId || !size) {
+  if (!productId || !size) {
     return res.status(400).json({ status: 'error', message: 'Missing fields.' });
   }
 
   try {
-    // Step 1: prevent the same user from buying twice
-    const lockKey = USER_LOCK_KEY(userId, productId);
-    const alreadyBought = await redis.set(lockKey, '1', {
-      NX: true,   // only set if key doesn't exist
-      EX: 86400,  // expires in 24h
-    });
+    // Step 0: check product exists and drop time has started
+    const productResult = await query(
+      'SELECT * FROM products WHERE id = $1',
+      [productId]
+    );
 
-    if (alreadyBought === null) {
-      return res.status(200).json({ status: 'rejected', message: 'You have already purchased this item.' });
+    const product = productResult.rows[0];
+
+    if (!product) {
+      return res.status(404).json({ status: 'error', message: 'Product not found.' });
     }
 
-    // Step 2: atomic inventory decrement via Lua
-    const remaining = await redis.eval(LUA_DECR, {
-      keys: [INVENTORY_KEY(productId)],
-      arguments: [],
-    });
+    if (new Date() < new Date(product.drop_time)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Sale has not started yet.',
+        drop_time: product.drop_time
+      });
+    }
+
+    // Step 1: atomic inventory decrement via Lua
+    let remaining;
+    try {
+      remaining = await redis.eval(LUA_DECR, {
+        keys: [INVENTORY_KEY(productId)],
+        arguments: [],
+      });
+    } catch (redisErr) {
+      console.error('Redis error:', redisErr);
+      return res.status(503).json({
+        status: 'error',
+        message: 'System busy. Please try again in a moment.'
+      });
+    }
 
     if (remaining === -1) {
-      // Undo the user lock so they can try other products
-      await redis.del(lockKey);
       return res.status(200).json({ status: 'sold_out', message: 'Sorry, this item is sold out.' });
     }
 
-    // Step 3: write confirmed order to Postgres
+    // Step 2: write confirmed order to PostgreSQL
     const orderId = uuidv4();
-    await pool.query(
+    await query(
       `INSERT INTO orders (id, user_id, product_id, size, status, created_at)
        VALUES ($1, $2, $3, $4, 'confirmed', NOW())`,
       [orderId, userId, productId, size]
@@ -63,18 +77,16 @@ exports.checkout = async (req, res) => {
 
   } catch (err) {
     console.error('Checkout error:', err);
-    return res.status(500).json({ status: 'error', message: 'Something went wrong. Try again.' });
+    return res.status(500).json({ status: 'error', message: 'Something went wrong.' });
   }
 };
 
-// Seed inventory into Redis — call this once when the drop goes live
 exports.seedInventory = async (req, res) => {
   const { productId, quantity } = req.body;
-  await redis.set(INVENTORY_KEY(productId), quantity);
-  return res.status(200).json({ message: `Inventory set: ${quantity} units for product ${productId}` });
+  await redis.set(INVENTORY_KEY(productId), String(quantity));
+  return res.status(200).json({ message: `Inventory set: ${quantity} units for ${productId}` });
 };
 
-// Get current stock — frontend polls this
 exports.getInventory = async (req, res) => {
   const { productId } = req.params;
   const stock = await redis.get(INVENTORY_KEY(productId));
