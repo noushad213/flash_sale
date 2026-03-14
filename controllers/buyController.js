@@ -68,6 +68,12 @@ exports.checkout = async (req, res) => {
       [orderId, userId, productId, size]
     );
 
+    // Step 3: sync remaining inventory to PostgreSQL
+    await query(
+      'UPDATE products SET remaining_inventory = remaining_inventory - 1 WHERE id = $1',
+      [productId]
+    );
+
     return res.status(200).json({
       status: 'success',
       message: 'Order confirmed!',
@@ -84,6 +90,11 @@ exports.checkout = async (req, res) => {
 exports.seedInventory = async (req, res) => {
   const { productId, quantity } = req.body;
   await redis.set(INVENTORY_KEY(productId), String(quantity));
+  // Also sync to PostgreSQL
+  await query(
+    'UPDATE products SET remaining_inventory = $1 WHERE id = $2',
+    [quantity, productId]
+  );
   return res.status(200).json({ message: `Inventory set: ${quantity} units for ${productId}` });
 };
 
