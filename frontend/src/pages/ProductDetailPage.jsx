@@ -53,23 +53,35 @@ const ProductDetailPage = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/product/${productId}`).catch(() => ({
-        data: productId === '00000000-0000-0000-0000-000000000000' ? {
-          id: productId,
-          name: 'Midnight Drop Hoodie (Black)',
-          description: 'The definitive silhouette. Heavyweight 500GSM black cotton with metallic finishes and custom hardware.',
-          price: 11000,
-          images: ['/hoodie_black_1.png', '/hoodie_black_2.png'],
-          drop_time: new Date(Date.now() + 15000).toISOString()
-        } : {
-          id: productId,
-          name: 'Cloud Drop Hoodie (White)',
-          description: 'Pure aesthetic. Bone-white premium fleece with tonal branding.',
-          price: 15000,
-          images: ['/hoodie_white_1.png'],
-          drop_time: new Date(Date.now() + 15000).toISOString()
-        }
-      }));
+      const res = await axios.get(`${API_BASE}/product/${productId}`).catch(() => {
+        const mockData = {
+          'void-hoodie': {
+            id: 'void-hoodie',
+            name: 'Void Hoodie',
+            description: 'Heavyweight blackout knit. Engineered for the deep archive. 500GSM premium cotton with reinforced seams and tactical hardware.',
+            price: 11000,
+            images: ['/hoodie_black_2.png', '/hoodie_black_1.png', '/hoodie_v2.png'],
+            drop_time: new Date(Date.now() + 15000).toISOString()
+          },
+          'vortex-kb': {
+            id: 'vortex-kb',
+            name: 'Vortex Keyboard',
+            description: 'Mechanical precision. Double-shot PBT keycaps with custom-lubed switches. Distributed node verification compliant.',
+            price: 15000,
+            images: ['/keyboard/key1.png', '/keyboard/key1.1.png', '/keyboard/key1.2.png'],
+            drop_time: new Date(Date.now() + 15000).toISOString()
+          },
+          '00000000-0000-0000-0000-000000000000': {
+            id: '00000000-0000-0000-0000-000000000000',
+            name: 'Midnight Drop Hoodie',
+            description: 'The definitive silhouette. Heavyweight 500GSM black cotton.',
+            price: 18999,
+            images: ['/hoodie_black_1.png'],
+            drop_time: new Date(Date.now() + 15000).toISOString()
+          }
+        };
+        return { data: mockData[productId] || mockData['void-hoodie'] };
+      });
       setProduct(res.data);
       updateStatus(res.data.drop_time);
     } catch (err) {

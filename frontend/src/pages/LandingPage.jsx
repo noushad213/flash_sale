@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import { useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 
 const Timer = ({ seconds }) => {
   const formatTime = (totalSeconds) => {
@@ -35,6 +36,194 @@ const Timer = ({ seconds }) => {
   );
 };
 
+const HoodieSequence = ({ timeRemaining, addToCart }) => {
+  const targetRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end end"]
+  });
+
+  const [frameIndex, setFrameIndex] = useState(1);
+  const totalFrames = 192;
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const frame = Math.floor(latest * (totalFrames - 1)) + 1;
+    setFrameIndex(Math.min(totalFrames, Math.max(1, frame)));
+  });
+
+  const framePath = `/hoodie_frames/frame_${frameIndex.toString().padStart(4, '0')}.png`;
+
+  const handleAddHoodie = () => {
+    addToCart({
+      id: 'void-hoodie',
+      name: 'Void Hoodie',
+      price: 11000,
+      image: '/hoodie_black_2.png'
+    });
+  };
+
+  const isDropped = timeRemaining <= 0;
+
+  return (
+    <section id="hoodie" ref={targetRef} style={{ height: '300vh', position: 'relative' }}>
+      <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden' }}>
+        <img 
+          src={framePath} 
+          alt="Void Hoodie Sequence" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+
+        {/* Product Info - Top Left */}
+        <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
+          <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
+            Void<br/>Hoodie
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
+            Heavyweight blackout knit. Engineered for the deep archive. Distributed node verification compliant.
+          </p>
+        </div>
+
+        {/* Brand Overlay - Bottom Right */}
+        <div style={{ 
+          position: 'absolute', 
+          bottom: '0', 
+          right: '0', 
+          zIndex: 40, 
+          background: '#000', 
+          padding: '28px 60px',
+          borderTopLeftRadius: '40px',
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '24px',
+          boxShadow: '-10px -10px 40px rgba(0,0,0,0.5)'
+        }}>
+          <span style={{ 
+            color: '#fff', 
+            fontSize: '28px', 
+            fontWeight: '900', 
+            letterSpacing: '0.15em', 
+            fontFamily: 'var(--font-display)',
+            lineHeight: '1'
+          }}>MD</span>
+          <div className="notch-logo" style={{ width: '28px', height: '28px', border: '3px solid #fff' }}></div>
+        </div>
+
+        <div style={{ position: 'absolute', top: '48px', right: '48px', zIndex: 20 }}>
+          <Timer seconds={timeRemaining} />
+        </div>
+
+        {/* Action Buttons - Bottom Center */}
+        <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: '24px' }}>
+          <button 
+            onClick={handleAddHoodie}
+            className="elliptical-btn"
+          >
+            Add to Cart
+          </button>
+          <Link to="/details/void-hoodie" style={{ textDecoration: 'none' }}>
+            <button className="elliptical-btn btn-outline-white">
+              Check Details
+            </button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const KeyboardSequence = ({ timeRemaining, addToCart }) => {
+  const targetRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end end"]
+  });
+
+  const [frameIndex, setFrameIndex] = useState(1);
+  const totalFrames = 192;
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const frame = Math.floor(latest * (totalFrames - 1)) + 1;
+    setFrameIndex(Math.min(totalFrames, Math.max(1, frame)));
+  });
+
+  const framePath = `/key_frames/frame_${frameIndex.toString().padStart(4, '0')}.png`;
+
+  const handleAddKeyboard = () => {
+    addToCart({
+      id: 'vortex-kb',
+      name: 'Vortex Keyboard',
+      price: 15000,
+      image: '/keyboard/key1.png'
+    });
+  };
+
+  return (
+    <section id="keyboard" ref={targetRef} style={{ height: '300vh', position: 'relative' }}>
+      <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden' }}>
+        <img 
+          src={framePath} 
+          alt="Vortex Keyboard Sequence" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+
+        {/* Product Info - Top Left */}
+        <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
+          <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
+            Vortex<br/>Keyboard
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
+            Mechanical precision. Double-shot PBT keycaps. Distributed node verification compliant.
+          </p>
+        </div>
+
+        {/* Brand Overlay - Bottom Right */}
+        <div style={{ 
+          position: 'absolute', 
+          bottom: '0', 
+          right: '0', 
+          zIndex: 40, 
+          background: '#000', 
+          padding: '28px 60px',
+          borderTopLeftRadius: '40px',
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '24px',
+          boxShadow: '-10px -10px 40px rgba(0,0,0,0.5)'
+        }}>
+          <span style={{ 
+            color: '#fff', 
+            fontSize: '28px', 
+            fontWeight: '900', 
+            letterSpacing: '0.15em', 
+            fontFamily: 'var(--font-display)',
+            lineHeight: '1'
+          }}>MD</span>
+          <div className="notch-logo" style={{ width: '28px', height: '28px', border: '3px solid #fff' }}></div>
+        </div>
+
+        <div style={{ position: 'absolute', top: '48px', right: '48px', zIndex: 20 }}>
+          <Timer seconds={timeRemaining} />
+        </div>
+
+        {/* Action Buttons - Bottom Center */}
+        <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: '24px' }}>
+          <button 
+            onClick={handleAddKeyboard}
+            className="elliptical-btn"
+          >
+            Add to Cart
+          </button>
+          <Link to="/details/vortex-kb" style={{ textDecoration: 'none' }}>
+            <button className="elliptical-btn btn-outline-white">
+              Check Details
+            </button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const LandingPage = ({ addToCart, timeRemaining }) => {
   const location = useLocation();
   const isDropped = timeRemaining <= 0;
@@ -48,35 +237,6 @@ const LandingPage = ({ addToCart, timeRemaining }) => {
     }
   }, [location]);
 
-  const images = ["/hoodie_black_2.png", "/hoodie_black_1.png", "/hoodie_back_light_bg.png"];
-  const [currentIdx, setCurrentIdx] = useState(0);
-
-  const kbImages = ["/keyboard/key1.png", "/keyboard/key1.1.png", "/keyboard/key1.2.png"];
-  const [kbIdx, setKbIdx] = useState(0);
-
-  const nextSlide = () => setCurrentIdx((prev) => (prev + 1) % images.length);
-  const prevSlide = () => setCurrentIdx((prev) => (prev - 1 + images.length) % images.length);
-
-  const nextKb = () => setKbIdx((prev) => (prev + 1) % kbImages.length);
-  const prevKb = () => setKbIdx((prev) => (prev - 1 + kbImages.length) % kbImages.length);
-
-  const handleAddHoodie = () => {
-    addToCart({
-      id: 'void-hoodie',
-      name: 'Void Hoodie',
-      price: 11000,
-      image: '/hoodie_black_2.png'
-    });
-  };
-
-  const handleAddKeyboard = () => {
-    addToCart({
-      id: 'vortex-kb',
-      name: 'Vortex Keyboard',
-      price: 15000,
-      image: '/keyboard/key1.png'
-    });
-  };
 
   return (
     <div className="landing-wrapper">
@@ -108,109 +268,11 @@ const LandingPage = ({ addToCart, timeRemaining }) => {
         </div>
       </div>
 
-      {/* First Full Screen Image: Interactive Hoodie Gallery */}
-      <section id="hoodie" className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img 
-            src={images[currentIdx]} 
-            alt="Void Hoodie Drop" 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        </div>
+      {/* Scroll Sequence Hoodie Section */}
+      <HoodieSequence timeRemaining={timeRemaining} addToCart={addToCart} />
 
-        {/* Product Info - Top Left */}
-        <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
-          <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
-            Void<br/>Hoodie
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
-            Heavyweight blackout knit. Engineered for the deep archive. Distributed node verification compliant.
-          </p>
-        </div>
-
-        <div style={{ position: 'absolute', top: '48px', right: '48px', zIndex: 20 }}>
-          <Timer seconds={timeRemaining} />
-        </div>
-
-        {/* Carousel Navigation */}
-        <button 
-          onClick={prevSlide}
-          style={{ position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)', zIndex: 30, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
-        >
-          <ChevronLeft size={64} strokeWidth={1} />
-        </button>
-        <button 
-          onClick={nextSlide}
-          style={{ position: 'absolute', right: '24px', top: '50%', transform: 'translateY(-50%)', zIndex: 30, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
-        >
-          <ChevronRight size={64} strokeWidth={1} />
-        </button>
-
-        {/* Action Buttons - Bottom Center */}
-        <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: '24px' }}>
-          <button 
-            onClick={handleAddHoodie}
-            className="elliptical-btn"
-          >
-            Add to Cart
-          </button>
-          <button className="elliptical-btn btn-outline-white">
-            Check Details
-          </button>
-        </div>
-      </section>
-
-      {/* Second Full Screen Image: Interactive Keyboard Gallery */}
-      <section id="keyboard" className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img 
-            src={kbImages[kbIdx]} 
-            alt="Vortex Keyboard Drop" 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        </div>
-
-        {/* Product Info - Top Left */}
-        <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
-          <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
-            Vortex<br/>Keyboard
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
-            Mechanical precision. Double-shot PBT keycaps. Distributed node verification compliant.
-          </p>
-        </div>
-
-        <div style={{ position: 'absolute', top: '48px', right: '48px', zIndex: 20 }}>
-          <Timer seconds={timeRemaining} />
-        </div>
-
-        {/* Carousel Navigation */}
-        <button 
-          onClick={prevKb}
-          style={{ position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)', zIndex: 30, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
-        >
-          <ChevronLeft size={64} strokeWidth={1} />
-        </button>
-        <button 
-          onClick={nextKb}
-          style={{ position: 'absolute', right: '24px', top: '50%', transform: 'translateY(-50%)', zIndex: 30, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
-        >
-          <ChevronRight size={64} strokeWidth={1} />
-        </button>
-
-        {/* Action Buttons - Bottom Center */}
-        <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: '24px' }}>
-          <button 
-            onClick={handleAddKeyboard}
-            className="elliptical-btn"
-          >
-            Add to Cart
-          </button>
-          <button className="elliptical-btn btn-outline-white">
-            Check Details
-          </button>
-        </div>
-      </section>
+      {/* Scroll Sequence Keyboard Section */}
+      <KeyboardSequence timeRemaining={timeRemaining} addToCart={addToCart} />
     </div>
   );
 };

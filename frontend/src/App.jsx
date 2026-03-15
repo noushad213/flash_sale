@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import LandingPage from './pages/LandingPage';
 import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import DetailsPage from './pages/DetailsPage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -140,6 +141,7 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
         <Route path="/" element={<LandingPage addToCart={addToCart} timeRemaining={timeRemaining} />} />
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/product/:productId" element={<ProductDetailPage />} />
+        <Route path="/details/:productId" element={<DetailsPage addToCart={addToCart} timeRemaining={timeRemaining} />} />
         <Route path="/checkout" element={<CheckoutPage timeRemaining={timeRemaining} />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminPage />} />

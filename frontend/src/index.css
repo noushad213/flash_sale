@@ -242,13 +242,47 @@ nav {
 .nav-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-family: var(--font-display);
   font-size: 14px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.25em;
   color: var(--nav-fg);
   text-decoration: none;
   font-weight: 700;
+  position: relative;
+  z-index: 10;
+}
+
+.nav-logo-notch {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  padding: 8px 32px 14px;
+  border-radius: 0 0 24px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+
+.notch-logo {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notch-logo::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: #fff;
 }
 
 .logo-diamond {
