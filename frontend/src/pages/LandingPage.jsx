@@ -39,20 +39,81 @@ const Timer = ({ seconds }) => {
 
 const HoodieSequence = ({ timeRemaining, addToCart }) => {
   const targetRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imagesRef = useRef([]);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const totalFrames = 192;
+
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end end"]
   });
 
-  const [frameIndex, setFrameIndex] = useState(1);
-  const totalFrames = 192;
+  // Preload images
+  useEffect(() => {
+    let loadedCount = 0;
+    const images = [];
+    for (let i = 1; i <= totalFrames; i++) {
+      const img = new Image();
+      img.src = `/hoodie_frames/frame_${i.toString().padStart(4, '0')}.png`;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === totalFrames) setImagesLoaded(true);
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalFrames) setImagesLoaded(true);
+      };
+      images.push(img);
+    }
+    imagesRef.current = images;
+  }, []);
+
+  const drawFrame = (index) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !imagesRef.current[index]) return;
+    const ctx = canvas.getContext('2d');
+    const img = imagesRef.current[index];
+
+    // Cover object-fit logic for canvas
+    const canvasAspect = canvas.width / canvas.height;
+    const imgAspect = img.width / img.height;
+    let drawWidth, drawHeight, offsetX, offsetY;
+
+    if (canvasAspect > imgAspect) {
+      drawWidth = canvas.width;
+      drawHeight = canvas.width / imgAspect;
+      offsetX = 0;
+      offsetY = (canvas.height - drawHeight) / 2;
+    } else {
+      drawWidth = canvas.height * imgAspect;
+      drawHeight = canvas.height;
+      offsetX = (canvas.width - drawWidth) / 2;
+      offsetY = 0;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+  };
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const frame = Math.floor(latest * (totalFrames - 1)) + 1;
-    setFrameIndex(Math.min(totalFrames, Math.max(1, frame)));
+    const frame = Math.floor(latest * (totalFrames - 1));
+    drawFrame(Math.min(totalFrames - 1, Math.max(0, frame)));
   });
 
-  const framePath = `/hoodie_frames/frame_${frameIndex.toString().padStart(4, '0')}.png`;
+  // Handle initial draw and resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth * window.devicePixelRatio;
+        canvasRef.current.height = window.innerHeight * window.devicePixelRatio;
+        drawFrame(0);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, [imagesLoaded]);
 
   const handleAddHoodie = () => {
     addToCart({
@@ -63,16 +124,19 @@ const HoodieSequence = ({ timeRemaining, addToCart }) => {
     });
   };
 
-  const isDropped = timeRemaining <= 0;
-
   return (
     <section id="hoodie" ref={targetRef} style={{ height: '300vh', position: 'relative' }}>
-      <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden' }}>
-        <img
-          src={framePath}
-          alt="Void Hoodie Sequence"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden', background: '#000' }}>
+        <canvas
+          ref={canvasRef}
+          style={{ width: '100%', height: '100%', display: 'block' }}
         />
+        
+        {!imagesLoaded && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#fff' }}>
+             <span className="text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Initializing Sequence...</span>
+          </div>
+        )}
 
         {/* Product Info - Top Left */}
         <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
@@ -134,20 +198,79 @@ const HoodieSequence = ({ timeRemaining, addToCart }) => {
 
 const KeyboardSequence = ({ timeRemaining, addToCart }) => {
   const targetRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imagesRef = useRef([]);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const totalFrames = 192;
+
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end end"]
   });
 
-  const [frameIndex, setFrameIndex] = useState(1);
-  const totalFrames = 192;
+  // Preload images
+  useEffect(() => {
+    let loadedCount = 0;
+    const images = [];
+    for (let i = 1; i <= totalFrames; i++) {
+      const img = new Image();
+      img.src = `/key_frames/frame_${i.toString().padStart(4, '0')}.png`;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === totalFrames) setImagesLoaded(true);
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalFrames) setImagesLoaded(true);
+      };
+      images.push(img);
+    }
+    imagesRef.current = images;
+  }, []);
+
+  const drawFrame = (index) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !imagesRef.current[index]) return;
+    const ctx = canvas.getContext('2d');
+    const img = imagesRef.current[index];
+
+    const canvasAspect = canvas.width / canvas.height;
+    const imgAspect = img.width / img.height;
+    let drawWidth, drawHeight, offsetX, offsetY;
+
+    if (canvasAspect > imgAspect) {
+      drawWidth = canvas.width;
+      drawHeight = canvas.width / imgAspect;
+      offsetX = 0;
+      offsetY = (canvas.height - drawHeight) / 2;
+    } else {
+      drawWidth = canvas.height * imgAspect;
+      drawHeight = canvas.height;
+      offsetX = (canvas.width - drawWidth) / 2;
+      offsetY = 0;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+  };
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const frame = Math.floor(latest * (totalFrames - 1)) + 1;
-    setFrameIndex(Math.min(totalFrames, Math.max(1, frame)));
+    const frame = Math.floor(latest * (totalFrames - 1));
+    drawFrame(Math.min(totalFrames - 1, Math.max(0, frame)));
   });
 
-  const framePath = `/key_frames/frame_${frameIndex.toString().padStart(4, '0')}.png`;
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth * window.devicePixelRatio;
+        canvasRef.current.height = window.innerHeight * window.devicePixelRatio;
+        drawFrame(0);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, [imagesLoaded]);
 
   const handleAddKeyboard = () => {
     addToCart({
@@ -160,12 +283,17 @@ const KeyboardSequence = ({ timeRemaining, addToCart }) => {
 
   return (
     <section id="keyboard" ref={targetRef} style={{ height: '300vh', position: 'relative' }}>
-      <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden' }}>
-        <img
-          src={framePath}
-          alt="Vortex Keyboard Sequence"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden', background: '#000' }}>
+        <canvas
+          ref={canvasRef}
+          style={{ width: '100%', height: '100%', display: 'block' }}
         />
+
+        {!imagesLoaded && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#fff' }}>
+             <span className="text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Initializing Sequence...</span>
+          </div>
+        )}
 
         {/* Product Info - Top Left */}
         <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
