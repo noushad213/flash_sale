@@ -2,16 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Cpu, Terminal, AlertTriangle, CheckCircle2, ChevronRight, Copy, Clock, Lock, CreditCard, Truck, User } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 
-const CheckoutPage = () => {
+const CheckoutPage = ({ timeRemaining }) => {
   const { pushEvent, metrics } = useTelemetry();
   const [step, setStep] = useState(0); 
+  const isLocked = timeRemaining > 0;
+
+  const formatTime = (totalSeconds) => {
+    const min = Math.floor(totalSeconds / 60);
+    const sec = totalSeconds % 60;
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    if (!isLocked) {
+      pushEvent({ type: 'CHECKOUT_START', productId: 'void-hoodie' });
+    }
+  }, [pushEvent, isLocked]);
+
+  if (isLocked) {
+    return (
+      <div className="checkout-container flex items-center justify-center" style={{ minHeight: '80vh', background: '#fff' }}>
+        <div className="text-center p-12 bg-white rounded-[32px] border border-gray-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] max-w-md w-full mx-4">
+          <div className="w-20 h-20 bg-gray-50 text-gray-900 rounded-full flex items-center justify-center mx-auto mb-8 border border-gray-100 shadow-inner">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 uppercase tracking-tight">Drop Standby</h2>
+          <p className="text-gray-500 text-sm mb-10 font-medium">Checkout is currently restricted. Please wait for the synchronized drop event to conclude.</p>
+          
+          <div className="py-10 border-y border-gray-50 mb-10">
+            <span className="text-[12px] text-gray-400 uppercase tracking-[0.4em] font-bold block mb-4">T-Minus</span>
+            <span className="text-8xl font-light text-gray-900 font-mono tracking-tighter">
+              {formatTime(timeRemaining)}
+            </span>
+          </div>
+
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="elliptical-btn w-full !bg-black !text-white h-14"
+          >
+            Return to Gallery
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [shippingData, setShippingData] = useState({ name: '', address: '', phone: '' });
   const [orderId] = useState(`ORDER-${Math.random().toString(36).substring(7).toUpperCase()}`);
   const [orderRef] = useState(Math.random().toString(36).substring(2, 6).toUpperCase());
-
-  useEffect(() => {
-    pushEvent({ type: 'CHECKOUT_START', productId: 'void-hoodie' });
-  }, [pushEvent]);
 
   useEffect(() => {
     const currentOrder = metrics.pendingPayments.find(p => p.id === orderId);
@@ -133,7 +171,7 @@ const CheckoutPage = () => {
               <div className="space-y-3">
                 <div className="summary-row">
                   <span className="text-gray-500">Void Hoodie</span>
-                  <span>$180.00</span>
+                  <span>₹11,000.00</span>
                 </div>
                 <div className="summary-row">
                   <span className="text-gray-500">Shipping</span>
@@ -141,11 +179,11 @@ const CheckoutPage = () => {
                 </div>
                 <div className="summary-row">
                   <span className="text-gray-500">Tax</span>
-                  <span>$0.00</span>
+                  <span>₹0.00</span>
                 </div>
                 <div className="summary-total">
                   <span>Total</span>
-                  <span>$180.00</span>
+                  <span>₹11,000.00</span>
                 </div>
               </div>
               <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col gap-4">

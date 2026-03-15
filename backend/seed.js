@@ -8,12 +8,14 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const redisClient = createClient({
-  socket: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
-  }
-});
+const redisClient = process.env.REDIS_URL
+  ? createClient({ url: process.env.REDIS_URL })
+  : createClient({
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: process.env.REDIS_PORT || 6379,
+      }
+    });
 
 const PRODUCTS = [
   {
@@ -60,6 +62,10 @@ async function seed() {
     console.log('Connected to Redis');
 
     // Sync schema (in case it changed)
+    await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+    await pool.query('DROP TABLE IF EXISTS orders CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS products CASCADE;');
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY,
@@ -70,6 +76,18 @@ async function seed() {
         remaining_inventory INTEGER NOT NULL,
         images TEXT[],
         drop_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Recreate orders table as well since we dropped it
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id VARCHAR(255),
+        product_id UUID REFERENCES products(id),
+        size VARCHAR(50),
+        status VARCHAR(50) DEFAULT 'pending',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);

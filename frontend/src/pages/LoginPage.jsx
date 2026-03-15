@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Zap, ArrowRight, Github } from 'lucide-react';
+import { Mail, Lock, Zap, ArrowRight, Github, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -34,26 +34,26 @@ const LoginPage = () => {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="auth-card"
       >
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
             <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="p-1 rounded-full border border-accent/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-3 rounded-2xl bg-slate-50 border border-slate-100 shadow-sm"
             >
-              <Zap className="text-accent w-10 h-10" strokeWidth={1} />
+              <Zap className="text-slate-900 w-8 h-8" fill="currentColor" fillOpacity={0.1} strokeWidth={1.5} />
             </motion.div>
           </div>
-          <h2 className="text-white text-4xl font-display uppercase tracking-[0.1em] mb-2">AUTH_GATEWAY</h2>
-          <p className="text-accent/60 text-[10px] font-bold uppercase tracking-[0.4em]">Initialize Protocol 0XAF32</p>
+          <h2 className="text-slate-900 text-3xl font-bold tracking-tight mb-2">Welcome Back</h2>
+          <p className="text-slate-500 text-sm font-medium">Please enter your details to sign in</p>
         </div>
 
         <form onSubmit={handleLogin} className="flex flex-col">
           <div className="auth-input-group">
-            <label className="auth-label">Identity_Credential</label>
+            <label className="auth-label">Email Address</label>
             <div className="auth-input-wrapper">
               <input 
                 type="email" 
@@ -61,14 +61,14 @@ const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="auth-input" 
-                placeholder="name@node.infrastructure"
+                placeholder="name@example.com"
               />
               <Mail size={18} />
             </div>
           </div>
 
           <div className="auth-input-group">
-            <label className="auth-label">Security_Key</label>
+            <label className="auth-label">Password</label>
             <div className="auth-input-wrapper">
               <input 
                 type="password" 
@@ -82,34 +82,39 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {error && <p className="text-[10px] text-red-400 font-bold tracking-widest text-center mb-6">ERR_GATEWAY: {error.toUpperCase()}</p>}
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-semibold text-center">
+              {error}
+            </div>
+          )}
 
           <button 
             type="submit" 
             disabled={loading}
-            className="auth-btn-primary"
+            className="auth-btn-primary group"
           >
-            {loading ? 'VALIDATING...' : 'ACCESS_SYSTEM'} 
-            {!loading && <ArrowRight size={18} strokeWidth={2.5} />}
-          </button>
-
-          <div className="auth-divider">
-            <span>OR_OAUTH_LINK</span>
-          </div>
-
-          <button 
-            type="button" 
-            className="auth-btn-secondary"
-          >
-            <Github size={20} /> SYNC_GITHUB
+            {loading ? 'Signing in...' : (
+              <>
+                Sign In 
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
           </button>
         </form>
 
-        <div className="mt-12 text-center">
-          <p className="text-white/20 text-[9px] font-bold uppercase tracking-widest leading-loose">
-            No authorized node detected? <br />
-            <Link to="/signup" className="text-accent hover:text-white transition-colors underline underline-offset-8">REQUEST_PROVISIONING</Link>
+        <div className="mt-10 text-center flex flex-col gap-6">
+          <p className="text-slate-500 text-sm font-medium">
+            Don't have an account? 
+            <Link to="/signup" className="text-slate-900 hover:text-black transition-colors ml-2 font-bold underline underline-offset-4 decoration-slate-200 hover:decoration-slate-400">Sign Up</Link>
           </p>
+          <div className="pt-6 border-t border-slate-100">
+            <Link 
+              to="/admin-login" 
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center gap-2 font-semibold"
+            >
+              <ShieldCheck size={14} /> Administrator Portal
+            </Link>
+          </div>
         </div>
       </motion.div>
     </div>

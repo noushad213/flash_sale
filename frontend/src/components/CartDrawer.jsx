@@ -1,12 +1,14 @@
 import React from 'react';
-import { X, Trash2, ShoppingBag } from 'lucide-react';
+import { X, Trash2, ShoppingBag, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const CartDrawer = ({ isOpen, onClose, cartItems, onRemove }) => {
+const CartDrawer = ({ isOpen, onClose, cartItems, onRemove, timeRemaining }) => {
   const navigate = useNavigate();
   const total = cartItems.reduce((acc, item) => acc + item.price, 0);
+  const isLocked = timeRemaining > 0;
 
   const handleCheckout = () => {
+    if (isLocked) return;
     onClose();
     navigate('/checkout');
   };
@@ -48,7 +50,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemove }) => {
                   </div>
                   <div className="cart-item-info">
                     <h3 className="uppercase text-[11px] font-bold tracking-widest m-0">{item.name}</h3>
-                    <p className="text-[10px] text-gray-500 m-0">${item.price}</p>
+                    <p className="text-[10px] text-gray-500 m-0">₹{item.price.toLocaleString('en-IN')}</p>
                   </div>
                   <button onClick={() => onRemove(index)} className="cart-item-remove">
                     <Trash2 size={16} />
@@ -63,14 +65,27 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemove }) => {
           <div className="cart-footer">
             <div className="flex justify-between mb-4 border-b border-gray-100 pb-4">
               <span className="text-[11px] font-bold uppercase tracking-widest">Total</span>
-              <span className="text-[11px] font-bold">${total}</span>
+              <span className="text-[11px] font-bold">₹{total.toLocaleString('en-IN')}</span>
             </div>
             <button 
               onClick={handleCheckout}
-              className="elliptical-btn w-full" 
-              style={{ background: '#000', color: '#fff' }}
+              disabled={isLocked}
+              className="elliptical-btn w-full flex items-center justify-center gap-3" 
+              style={{ 
+                background: isLocked ? '#f5f5f7' : '#000', 
+                color: isLocked ? '#a1a1a6' : '#fff',
+                cursor: isLocked ? 'not-allowed' : 'pointer',
+                border: isLocked ? '1px solid #e2e8f0' : 'none',
+                opacity: 1
+              }}
             >
-              CHECKOUT
+              {isLocked ? (
+                <>
+                  <Lock size={16} /> DROP LOCKED
+                </>
+              ) : (
+                'CHECKOUT'
+              )}
             </button>
           </div>
         )}

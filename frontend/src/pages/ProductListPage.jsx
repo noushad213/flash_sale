@@ -67,17 +67,17 @@ const ProductListPage = () => {
                   />
                 </Link>
                 <div className="absolute top-12 left-12 badge bg-white/80 backdrop-blur-md border-black/5 text-black px-6 py-3 text-[10px] tracking-widest font-mono rounded-full">
-                  {idx === 0 ? 'NOW_LIVE' : 'UPCOMING'}
+                  {idx === 0 ? 'NOW LIVE' : 'UPCOMING'}
                 </div>
               </div>
 
               <div className="flex justify-between items-end border-b border-black/5 pb-16">
                 <div className="space-y-4">
-                  <p className="font-mono uppercase text-muted tracking-widest text-xs">UNIT_{idx + 1}.0 // {product.tag?.split(' // ')[1] || 'ARCHIVE'}</p>
+                  <p className="font-mono uppercase text-muted tracking-widest text-xs">UNIT {idx + 1}.0 // {product.tag?.split(' // ')[1] || 'ARCHIVE'}</p>
                   <h2 className="text-5xl font-light">{product.name}</h2>
                 </div>
                 <div className="text-right space-y-8">
-                  <p className="text-5xl font-thin tracking-tighter">${product.price}</p>
+                   <p className="text-5xl font-thin tracking-tighter">₹{product.price.toLocaleString('en-IN')}</p>
                   <Link to={`/product/${product.id}`}>
                     <button className="line-btn text-xs">Provision Access <ArrowUpRight className="inline w-4 h-4 ml-2" /></button>
                   </Link>

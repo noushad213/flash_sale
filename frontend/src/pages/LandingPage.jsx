@@ -1,10 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
 import { useLocation } from 'react-router-dom';
 
-const LandingPage = ({ addToCart }) => {
+const Timer = ({ seconds }) => {
+  const formatTime = (totalSeconds) => {
+    const min = Math.floor(totalSeconds / 60);
+    const sec = totalSeconds % 60;
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div style={{ 
+      background: 'rgba(255,255,255,0.05)', 
+      backdropFilter: 'blur(32px)',
+      padding: '24px 44px',
+      borderRadius: '32px',
+      border: '1px solid rgba(255,255,255,0.1)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      pointerEvents: 'auto',
+      width: 'fit-content'
+    }}>
+      <div className="flex items-center gap-4 mb-2">
+        <div style={{ width: '10px', height: '10px', background: seconds > 0 ? '#ff3b30' : '#30d158', borderRadius: '50%', boxShadow: seconds > 0 ? '0 0 16px rgba(255, 59, 48, 0.6)' : '0 0 16px rgba(48, 209, 88, 0.6)' }} className={seconds > 0 ? "animate-pulse" : ""}></div>
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.4em' }}>
+          {seconds > 0 ? 'Drop Window Active' : 'Drop Successful'}
+        </span>
+      </div>
+      <span style={{ color: '#fff', fontSize: '80px', fontWeight: '200', fontFamily: 'var(--font-display)', letterSpacing: '0.05em', lineHeight: '1' }}>
+        {seconds > 0 ? formatTime(seconds) : 'LIVE'}
+      </span>
+    </div>
+  );
+};
+
+const LandingPage = ({ addToCart, timeRemaining }) => {
   const location = useLocation();
+  const isDropped = timeRemaining <= 0;
 
   useEffect(() => {
     if (location.hash) {
@@ -31,7 +64,7 @@ const LandingPage = ({ addToCart }) => {
     addToCart({
       id: 'void-hoodie',
       name: 'Void Hoodie',
-      price: 180,
+      price: 11000,
       image: '/hoodie_black_2.png'
     });
   };
@@ -40,7 +73,7 @@ const LandingPage = ({ addToCart }) => {
     addToCart({
       id: 'vortex-kb',
       name: 'Vortex Keyboard',
-      price: 240,
+      price: 15000,
       image: '/keyboard/key1.png'
     });
   };
@@ -63,6 +96,18 @@ const LandingPage = ({ addToCart }) => {
         </h1>
       </section>
 
+      {/* Dropping Soon Ticker Strip */}
+      <div className="ticker-strip">
+        <div className="ticker-content">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="ticker-item">
+              <div className="ticker-dot" style={{ background: isDropped ? '#30d158' : '#ff3b30' }} />
+              <span>{isDropped ? 'Drop Successful' : 'Dropping Soon'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* First Full Screen Image: Interactive Hoodie Gallery */}
       <section id="hoodie" className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
@@ -81,6 +126,10 @@ const LandingPage = ({ addToCart }) => {
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
             Heavyweight blackout knit. Engineered for the deep archive. Distributed node verification compliant.
           </p>
+        </div>
+
+        <div style={{ position: 'absolute', top: '48px', right: '48px', zIndex: 20 }}>
+          <Timer seconds={timeRemaining} />
         </div>
 
         {/* Carousel Navigation */}
@@ -129,6 +178,10 @@ const LandingPage = ({ addToCart }) => {
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
             Mechanical precision. Double-shot PBT keycaps. Distributed node verification compliant.
           </p>
+        </div>
+
+        <div style={{ position: 'absolute', top: '48px', right: '48px', zIndex: 20 }}>
+          <Timer seconds={timeRemaining} />
         </div>
 
         {/* Carousel Navigation */}

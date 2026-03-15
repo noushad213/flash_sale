@@ -39,21 +39,27 @@ const Navigation = ({ toggleCart, cartCount }) => {
 
         <div className="nav-links">
           {[
-            { label: 'Electronics', links: [
-              { name: 'Vortex Keyboard', path: '/#keyboard' },
-              { name: 'Phones', locked: true },
-              { name: 'Monitors', locked: true }
-            ]},
-            { label: 'Apparel', links: [
-              { name: 'Midnight Hoodie', path: '/#hoodie' },
-              { name: 'Trousers', locked: true },
-              { name: 'Jeans', locked: true }
-            ]},
-            { label: 'Infrastructure', links: [
-              { name: 'Telemetry', path: '/admin' },
-              { name: 'Nodes', path: '/products' },
-              { name: 'Support', path: '/support' }
-            ]}
+            {
+              label: 'Electronics', links: [
+                { name: 'Vortex Keyboard', path: '/#keyboard' },
+                { name: 'Phones', locked: true },
+                { name: 'Monitors', locked: true }
+              ]
+            },
+            {
+              label: 'Apparel', links: [
+                { name: 'Midnight Hoodie', path: '/#hoodie' },
+                { name: 'Trousers', locked: true },
+                { name: 'Jeans', locked: true }
+              ]
+            },
+            {
+              label: 'Infrastructure', links: [
+                { name: 'Telemetry', path: '/admin' },
+                { name: 'Nodes', path: '/products' },
+                { name: 'Support', path: '/support' }
+              ]
+            }
           ].map((group) => (
             <div key={group.label} className="nav-group">
               <button className="nav-link">{group.label}</button>
@@ -82,7 +88,7 @@ const Navigation = ({ toggleCart, cartCount }) => {
                 <button onClick={handleLogout} className="nav-link font-bold">SIG_OUT</button>
               </div>
             ) : (
-              <Link to="/login" className="nav-link" style={{ fontWeight: '700' }}>GATEWAY_AUTH</Link>
+              <Link to="/login" className="nav-link border border-black/20 px-8 font-extrabold hover:bg-black hover:text-white transition-all">LOGIN</Link>
             )}
           </div>
           <div className="flex items-center gap-4">
@@ -92,13 +98,13 @@ const Navigation = ({ toggleCart, cartCount }) => {
             <button onClick={toggleCart} className="nav-link relative">
               <ShoppingBag size={18} />
               {cartCount > 0 && (
-                <span 
-                  className="absolute border border-white" 
-                  style={{ 
-                    top: '6px', 
-                    right: '12px', 
-                    width: '8px', 
-                    height: '8px', 
+                <span
+                  className="absolute border border-white"
+                  style={{
+                    top: '6px',
+                    right: '12px',
+                    width: '8px',
+                    height: '8px',
                     backgroundColor: '#ff453a',
                     borderRadius: '50%'
                   }}
@@ -112,7 +118,7 @@ const Navigation = ({ toggleCart, cartCount }) => {
   );
 };
 
-const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart }) => {
+const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart, timeRemaining }) => {
   const location = useLocation();
   const isAdmin = location.pathname === '/admin';
   const toggleCart = () => setIsCartOpen(!isCartOpen);
@@ -121,63 +127,74 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
     <div style={{ paddingTop: isAdmin ? '0' : '52px' }}>
       {!isAdmin && <Navigation toggleCart={toggleCart} cartCount={cartItems.length} />}
       {!isAdmin && (
-        <CartDrawer 
-          isOpen={isCartOpen} 
-          onClose={() => setIsCartOpen(false)} 
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
           cartItems={cartItems}
           onRemove={removeFromCart}
+          timeRemaining={timeRemaining}
         />
       )}
-      
+
       <Routes>
-        <Route path="/" element={<LandingPage addToCart={addToCart} />} />
+        <Route path="/" element={<LandingPage addToCart={addToCart} timeRemaining={timeRemaining} />} />
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/product/:productId" element={<ProductDetailPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout" element={<CheckoutPage timeRemaining={timeRemaining} />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Routes>
-      
+
       {!isAdmin && (
         <footer>
           <div className="container">
             <div className="footer-grid">
               {[
-                { title: 'Shop and Learn', links: [
-                  { name: 'Archive', path: '#' },
-                  { name: 'Mac', path: '#' },
-                  { name: 'iPhone', path: '#' },
-                  { name: 'Apparel', path: '#' },
-                  { name: 'Vortex', path: '#' },
-                  { name: 'Audio', path: '#' }
-                ]},
-                { title: 'Services', links: [
-                  { name: 'Gateway+', path: '#' },
-                  { name: 'Waistroom Logic', path: '#' },
-                  { name: 'Midnight Music', path: '#' },
-                  { name: 'Privacy Matrix', path: '#' }
-                ]},
-                { title: 'Gateway Store', links: [
-                  { name: 'Find a Node', path: '#' },
-                  { name: 'Genius Bar', path: '#' },
-                  { name: 'Today at Midnight', path: '#' },
-                  { name: 'Financing', path: '#' }
-                ]},
-                { title: 'For Business', links: [
-                  { name: 'Midnight Business', path: '#' },
-                  { name: 'Shop for Business', path: '#' },
-                  { name: 'Healthcare', path: '#' },
-                  { name: 'Admin', path: '/admin-login' }
-                ]},
-                { title: 'Midnight Values', links: [
-                  { name: 'Accessibility', path: '#' },
-                  { name: 'Environment', path: '#' },
-                  { name: 'Privacy', path: '#' },
-                  { name: 'About Midnight', path: '#' }
-                ]}
+                {
+                  title: 'Shop and Learn', links: [
+                    { name: 'Archive', path: '#' },
+                    { name: 'Mac', path: '#' },
+                    { name: 'iPhone', path: '#' },
+                    { name: 'Apparel', path: '#' },
+                    { name: 'Vortex', path: '#' },
+                    { name: 'Audio', path: '#' }
+                  ]
+                },
+                {
+                  title: 'Services', links: [
+                    { name: 'Gateway+', path: '#' },
+                    { name: 'Waistroom Logic', path: '#' },
+                    { name: 'Midnight Music', path: '#' },
+                    { name: 'Privacy Matrix', path: '#' }
+                  ]
+                },
+                {
+                  title: 'Gateway Store', links: [
+                    { name: 'Find a Node', path: '#' },
+                    { name: 'Genius Bar', path: '#' },
+                    { name: 'Today at Midnight', path: '#' },
+                    { name: 'Financing', path: '#' }
+                  ]
+                },
+                {
+                  title: 'For Business', links: [
+                    { name: 'Midnight Business', path: '#' },
+                    { name: 'Shop for Business', path: '#' },
+                    { name: 'Healthcare', path: '#' },
+                    { name: 'Admin', path: '/admin-login' }
+                  ]
+                },
+                {
+                  title: 'Midnight Values', links: [
+                    { name: 'Accessibility', path: '#' },
+                    { name: 'Environment', path: '#' },
+                    { name: 'Privacy', path: '#' },
+                    { name: 'About Midnight', path: '#' }
+                  ]
+                }
               ].map((col, idx) => (
                 <div key={idx} className="footer-col">
                   <h4>{col.title}</h4>
@@ -195,15 +212,15 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
                 </div>
               ))}
             </div>
-            
+
             <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <span style={{ fontSize: '12px', color: 'var(--fg2)' }}>© 2026 MIDNIGHT DROP INFRASTRUCTURE.</span>
-               <div className="flex gap-4">
-                 <span style={{ fontSize: '12px', color: 'var(--fg2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                   <span style={{ width: '6px', height: '6px', background: '#30d158', borderRadius: '50%' }}></span>
-                   0XAF32:OK
-                 </span>
-               </div>
+              <span style={{ fontSize: '12px', color: 'var(--fg2)' }}>© 2026 MIDNIGHT DROP INFRASTRUCTURE.</span>
+              <div className="flex gap-4">
+                <span style={{ fontSize: '12px', color: 'var(--fg2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: '6px', height: '6px', background: '#30d158', borderRadius: '50%' }}></span>
+                  0XAF32:OK
+                </span>
+              </div>
             </div>
           </div>
         </footer>
@@ -215,6 +232,15 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(15); // 15 seconds for testing
+
+  useEffect(() => {
+    if (timeRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeRemaining]);
 
   const addToCart = (product) => {
     setCartItems(prev => [...prev, product]);
@@ -228,12 +254,13 @@ function App() {
   return (
     <TelemetryProvider>
       <Router>
-        <AppContent 
+        <AppContent
           cartItems={cartItems}
           isCartOpen={isCartOpen}
           setIsCartOpen={setIsCartOpen}
           removeFromCart={removeFromCart}
           addToCart={addToCart}
+          timeRemaining={timeRemaining}
         />
       </Router>
     </TelemetryProvider>

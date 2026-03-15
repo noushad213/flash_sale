@@ -58,16 +58,16 @@ const ProductDetailPage = () => {
           id: productId,
           name: 'Midnight Drop Hoodie (Black)',
           description: 'The definitive silhouette. Heavyweight 500GSM black cotton with metallic finishes and custom hardware.',
-          price: 89.99,
+          price: 11000,
           images: ['/hoodie_black_1.png', '/hoodie_black_2.png'],
-          drop_time: new Date(Date.now() + 30000).toISOString()
+          drop_time: new Date(Date.now() + 15000).toISOString()
         } : {
           id: productId,
           name: 'Cloud Drop Hoodie (White)',
           description: 'Pure aesthetic. Bone-white premium fleece with tonal branding.',
-          price: 95.00,
+          price: 15000,
           images: ['/hoodie_white_1.png'],
-          drop_time: new Date(Date.now() + 120000).toISOString()
+          drop_time: new Date(Date.now() + 15000).toISOString()
         }
       }));
       setProduct(res.data);
@@ -163,7 +163,7 @@ const ProductDetailPage = () => {
   return (
     <div className="container" style={{ paddingBottom: '100px' }}>
       <button onClick={() => navigate('/')} className="nav-link flex items-center gap-2 mb-8" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-        <ChevronLeft className="w-4 h-4" /> BACK_TO_DROP_CENTER
+        <ChevronLeft className="w-4 h-4" /> BACK TO DROP CENTER
       </button>
 
       <main className="grid md:grid-cols-2 gap-16 items-start">
@@ -245,7 +245,7 @@ const ProductDetailPage = () => {
           <div className="space-y-4">
               <h1 style={{ fontSize: '4rem', fontWeight: '900', lineHeight: 1 }}>{product.name}</h1>
               <div className="flex items-center gap-6">
-                <h2 style={{ fontSize: '2.5rem', margin: 0, color: 'var(--accent-primary)' }}>${product.price}</h2>
+                <h2 style={{ fontSize: '2.5rem', margin: 0, color: 'var(--accent-primary)' }}>₹{product.price.toLocaleString('en-IN')}</h2>
                 <div className="p-px bg-white/10 h-8 w-px" />
                 <p className="text-secondary font-mono text-sm tracking-widest uppercase">Release ID: 0x{productId.slice(0, 6)}</p>
               </div>
@@ -284,10 +284,10 @@ const ProductDetailPage = () => {
                     {status === 'upcoming' ? (
                       <div className="text-center space-y-4 pt-4">
                          <p className="text-sm font-mono text-muted uppercase tracking-[0.2em]">Gate opens in</p>
-                         <p style={{ fontSize: '5rem', fontWeight: '900', letterSpacing: '-0.04em', fontFamily: 'JetBrains Mono', color: 'var(--accent-primary)' }}>
-                           {timeLeft || '00:00:00'}
-                         </p>
-                         <button disabled className="glow-btn w-full opacity-30 cursor-not-allowed">GATE_LOCKED</button>
+                          <p style={{ fontSize: '8rem', fontWeight: '900', letterSpacing: '-0.04em', fontFamily: 'JetBrains Mono', color: 'var(--accent-primary)', lineHeight: '1' }}>
+                            {timeLeft || '00:00:00'}
+                          </p>
+                         <button disabled className="glow-btn w-full opacity-30 cursor-not-allowed">GATE LOCKED</button>
                       </div>
                     ) : (
                       <motion.button
@@ -312,7 +312,7 @@ const ProductDetailPage = () => {
                    </div>
                    <div className="space-y-2">
                      <h2 className="text-2xl font-black uppercase italic">Securing Allocation</h2>
-                     <p className="text-muted text-sm font-mono tracking-widest">ENCRYPTING_TOKEN...</p>
+                     <p className="text-muted text-sm font-mono tracking-widest">ENCRYPTING TOKEN...</p>
                    </div>
                 </motion.div>
               )}
@@ -347,7 +347,7 @@ const ProductDetailPage = () => {
                       <p className="text-muted text-[10px] font-mono mb-2 uppercase tracking-widest">Confirmation Ledger</p>
                       <p className="text-primary font-mono text-sm break-all">TX_HASH: {orderDetails?.orderId}</p>
                    </div>
-                   <button onClick={() => setCheckoutState('idle')} className="glow-btn w-full">CONTINUE_SHOPPING</button>
+                   <button onClick={() => setCheckoutState('idle')} className="glow-btn w-full">CONTINUE SHOPPING</button>
                 </motion.div>
               )}
 
