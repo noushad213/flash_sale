@@ -6,6 +6,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import { Search, ShoppingBag, LayoutDashboard, Zap, LogIn, LogOut, Package, Lock } from 'lucide-react';
 import CartDrawer from './components/CartDrawer';
 import CheckoutPage from './pages/CheckoutPage';
@@ -38,13 +39,13 @@ const Navigation = ({ toggleCart, cartCount }) => {
         <div className="nav-links">
           {[
             { label: 'Electronics', links: [
-              { name: 'Vortex Keyboard', path: '/product/22222222-2222-2222-2222-222222222222' },
+              { name: 'Vortex Keyboard', path: '/#keyboard' },
               { name: 'Phones', locked: true },
               { name: 'Monitors', locked: true }
             ]},
             { label: 'Apparel', links: [
-              { name: 'Midnight Hoodie', path: '/product/00000000-0000-0000-0000-000000000000' },
-              { name: 'Trousers', path: '/products' },
+              { name: 'Midnight Hoodie', path: '/#hoodie' },
+              { name: 'Trousers', locked: true },
               { name: 'Jeans', locked: true }
             ]},
             { label: 'Infrastructure', links: [
@@ -107,57 +108,83 @@ const Navigation = ({ toggleCart, cartCount }) => {
   );
 };
 
-function App() {
-  const [cartItems, setCartItems] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  const addToCart = (product) => {
-    setCartItems(prev => [...prev, product]);
-    setIsCartOpen(true); // Open cart immediately when added
-  };
-
-  const removeFromCart = (index) => {
-    setCartItems(prev => prev.filter((_, i) => i !== index));
-  };
-
+const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart }) => {
+  const location = useLocation();
+  const isAdmin = location.pathname === '/admin';
   const toggleCart = () => setIsCartOpen(!isCartOpen);
 
   return (
-    <TelemetryProvider>
-      <Router>
-        <div style={{ paddingTop: '52px' }}>
-        <Navigation toggleCart={toggleCart} cartCount={cartItems.length} />
+    <div style={{ paddingTop: isAdmin ? '0' : '52px' }}>
+      {!isAdmin && <Navigation toggleCart={toggleCart} cartCount={cartItems.length} />}
+      {!isAdmin && (
         <CartDrawer 
           isOpen={isCartOpen} 
           onClose={() => setIsCartOpen(false)} 
           cartItems={cartItems}
           onRemove={removeFromCart}
         />
-        <Routes>
-          <Route path="/" element={<LandingPage addToCart={addToCart} />} />
-          <Route path="/products" element={<ProductListPage />} />
-          <Route path="/product/:productId" element={<ProductDetailPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-        </Routes>
-        
+      )}
+      
+      <Routes>
+        <Route path="/" element={<LandingPage addToCart={addToCart} />} />
+        <Route path="/products" element={<ProductListPage />} />
+        <Route path="/product/:productId" element={<ProductDetailPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/admin-login" element={<AdminLoginPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+      </Routes>
+      
+      {!isAdmin && (
         <footer>
           <div className="container">
             <div className="footer-grid">
               {[
-                { title: 'Shop and Learn', links: ['Archive', 'Mac', 'iPhone', 'Apparel', 'Vortex', 'Audio'] },
-                { title: 'Services', links: ['Gateway+', 'Waistroom Logic', 'Midnight Music', 'Privacy Matrix'] },
-                { title: 'Gateway Store', links: ['Find a Node', 'Genius Bar', 'Today at Midnight', 'Financing'] },
-                { title: 'For Business', links: ['Midnight Business', 'Shop for Business', 'Healthcare'] },
-                { title: 'Midnight Values', links: ['Accessibility', 'Environment', 'Privacy', 'About Midnight'] }
+                { title: 'Shop and Learn', links: [
+                  { name: 'Archive', path: '#' },
+                  { name: 'Mac', path: '#' },
+                  { name: 'iPhone', path: '#' },
+                  { name: 'Apparel', path: '#' },
+                  { name: 'Vortex', path: '#' },
+                  { name: 'Audio', path: '#' }
+                ]},
+                { title: 'Services', links: [
+                  { name: 'Gateway+', path: '#' },
+                  { name: 'Waistroom Logic', path: '#' },
+                  { name: 'Midnight Music', path: '#' },
+                  { name: 'Privacy Matrix', path: '#' }
+                ]},
+                { title: 'Gateway Store', links: [
+                  { name: 'Find a Node', path: '#' },
+                  { name: 'Genius Bar', path: '#' },
+                  { name: 'Today at Midnight', path: '#' },
+                  { name: 'Financing', path: '#' }
+                ]},
+                { title: 'For Business', links: [
+                  { name: 'Midnight Business', path: '#' },
+                  { name: 'Shop for Business', path: '#' },
+                  { name: 'Healthcare', path: '#' },
+                  { name: 'Admin', path: '/admin-login' }
+                ]},
+                { title: 'Midnight Values', links: [
+                  { name: 'Accessibility', path: '#' },
+                  { name: 'Environment', path: '#' },
+                  { name: 'Privacy', path: '#' },
+                  { name: 'About Midnight', path: '#' }
+                ]}
               ].map((col, idx) => (
                 <div key={idx} className="footer-col">
                   <h4>{col.title}</h4>
                   <ul>
                     {col.links.map((link, lIdx) => (
-                      <li key={lIdx}><a href="#">{link}</a></li>
+                      <li key={lIdx}>
+                        {link.path === '#' ? (
+                          <a href="#">{link.name}</a>
+                        ) : (
+                          <Link to={link.path}>{link.name}</Link>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -175,8 +202,35 @@ function App() {
             </div>
           </div>
         </footer>
-      </div>
-    </Router>
+      )}
+    </div>
+  );
+};
+
+function App() {
+  const [cartItems, setCartItems] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const addToCart = (product) => {
+    setCartItems(prev => [...prev, product]);
+    setIsCartOpen(true);
+  };
+
+  const removeFromCart = (index) => {
+    setCartItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  return (
+    <TelemetryProvider>
+      <Router>
+        <AppContent 
+          cartItems={cartItems}
+          isCartOpen={isCartOpen}
+          setIsCartOpen={setIsCartOpen}
+          removeFromCart={removeFromCart}
+          addToCart={addToCart}
+        />
+      </Router>
     </TelemetryProvider>
   );
 }

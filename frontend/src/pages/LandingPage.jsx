@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { useLocation } from 'react-router-dom';
+
 const LandingPage = ({ addToCart }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]);
+
   const images = ["/hoodie_black_2.png", "/hoodie_black_1.png", "/hoodie_back_light_bg.png"];
   const [currentIdx, setCurrentIdx] = useState(0);
 
@@ -51,7 +64,7 @@ const LandingPage = ({ addToCart }) => {
       </section>
 
       {/* First Full Screen Image: Interactive Hoodie Gallery */}
-      <section className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
+      <section id="hoodie" className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <img 
             src={images[currentIdx]} 
@@ -99,7 +112,7 @@ const LandingPage = ({ addToCart }) => {
       </section>
 
       {/* Second Full Screen Image: Interactive Keyboard Gallery */}
-      <section className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
+      <section id="keyboard" className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <img 
             src={kbImages[kbIdx]} 

@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  BarChart3, Users, Box, TrendingUp, Activity, Play, Zap, ShieldAlert, 
-  Search, RefreshCcw, Command, Trash2, Power
+  Users, Activity, Zap, ShieldAlert,
+  RefreshCcw, Power, Play, LogOut,
+  Search, Bell, MessageSquare, 
+  LayoutDashboard, ShoppingBag, User,
+  FileText, Calendar, Columns, MapPin, MoreHorizontal, Command, Menu
 } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 import {
@@ -11,51 +14,53 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 
 ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement, 
+  CategoryScale, LinearScale, PointElement, LineElement, 
   Title, Tooltip, Legend, Filler
 );
 
 const AdminPage = () => {
   const { events, metrics, resetMetrics, pushEvent } = useTelemetry();
-  const [isLive, setIsLive] = useState(true);
   const [killSwitchActive, setKillSwitchActive] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const navigate = useNavigate();
 
-  // Sync RPS data for the chart
-  const hartData = {
+  const handleLogout = () => {
+    localStorage.removeItem('admin_auth');
+    navigate('/admin-login');
+  };
+
+  const chartData = {
     labels: metrics.rps.map((_, i) => `${i}s`),
     datasets: [{
-      label: 'GATE_BURST_RPS',
+      label: 'Requests',
       data: metrics.rps,
-      borderColor: '#ff453a',
-      backgroundColor: 'rgba(255, 69, 58, 0.1)',
+      borderColor: '#3b7ddd',
+      backgroundColor: 'rgba(59, 125, 221, 0.1)',
       fill: true,
       tension: 0.4,
-      pointRadius: 0
+      pointRadius: metrics.rps.map((r, i) => i % 5 === 0 && i !== 0 ? 4 : 0),
+      pointBackgroundColor: '#3b7ddd',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      borderWidth: 2
     }]
   };
 
   const handleSimulateBurst = () => {
-    // Simulate multi-hit burst
     const products = ['void-hoodie', 'vortex-kb'];
     for (let i = 0; i < 50; i++) {
       setTimeout(() => {
         const prod = products[Math.floor(Math.random() * products.length)];
-        pushEvent({ 
-          type: 'CHECKOUT_START', 
-          productId: prod,
-          status: 'pending'
-        });
+        pushEvent({ type: 'CHECKOUT_START', productId: prod, status: 'pending' });
         
-        // Randomly succeed or fail based on current simulated load
         setTimeout(() => {
           const success = Math.random() > 0.3;
           pushEvent({
@@ -69,158 +74,242 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="admin-war-room min-h-screen bg-[#050505] text-white p-8">
-      {/* Dashboard Header */}
-      <header className="flex items-center justify-between mb-12 border-b border-white/5 pb-8">
-        <div className="flex items-center gap-6">
-          <div className={`p-4 rounded-2xl ${killSwitchActive ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white'}`}>
-            <Command size={32} strokeWidth={1.5} />
-          </div>
-          <div>
-            <h1 className="font-display text-4xl uppercase tracking-tighter m-0">War Room</h1>
-            <div className="flex items-center gap-3 mt-1">
-              <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-white/20'}`}></span>
-              <p className="text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase m-0">
-                {killSwitchActive ? 'SYSTEM_LOCKED_BY_ADMIN' : 'GATE_STATUS: ON_STANDBY'}
-              </p>
+    <div className="flex h-screen bg-[#f5f7fb] font-sans text-slate-600 overflow-hidden">
+      
+      {/* Sidebar */}
+      <aside className={`${isSidebarOpen ? 'w-[260px] translate-x-0' : 'w-0 -translate-x-full overflow-hidden'} bg-[#222e3c] text-[#adb5bd] flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out`}>
+        <div className="p-6 flex items-center gap-2 text-white border-b border-[#2b394a] whitespace-nowrap min-w-[260px]">
+          <Command size={22} className="text-[#3b7ddd]" />
+          <span className="text-lg font-semibold tracking-wide flex items-center gap-2 uppercase">
+            Midnight Drop
+          </span>
+        </div>
+        
+        <div className="flex-1 py-4 custom-scrollbar whitespace-nowrap min-w-[260px]">
+          <div className="flex flex-col gap-1 px-3 mt-4">
+            <div className="bg-[#1c2631] text-white px-3 py-2.5 mx-1 rounded flex items-center justify-between border-l-2 border-[#3b7ddd]">
+              <div className="flex items-center gap-3">
+                <LayoutDashboard size={18} className="text-[#3b7ddd]" />
+                <span className="text-sm font-medium">Dashboards</span>
+              </div>
             </div>
           </div>
         </div>
+      </aside>
 
-        <div className="flex gap-4">
-          <button 
-            className="elliptical-btn" 
-            style={{ minWidth: 'auto', padding: '12px 24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-            onClick={resetMetrics}
-          >
-            <RefreshCcw size={16} className="mr-2" /> RESET
-          </button>
-          <button 
-            className="elliptical-btn" 
-            style={{ minWidth: 'auto', padding: '12px 24px', background: killSwitchActive ? '#ff453a' : '#fff', color: killSwitchActive ? '#fff' : '#000' }}
-            onClick={() => setKillSwitchActive(!killSwitchActive)}
-          >
-            <Power size={16} className="mr-2" /> KILL_SWITCH
-          </button>
-          <button 
-            className="elliptical-btn" 
-            style={{ minWidth: 'auto', padding: '12px 32px', background: '#fff', color: '#000' }}
-            onClick={handleSimulateBurst}
-          >
-            <Play size={16} className="mr-2" fill="currentColor" /> INJECT_BURST
-          </button>
-        </div>
-      </header>
-
-      {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        {[
-          { label: 'CONCURRENT_REQUESTS', val: metrics.totalRequests, icon: Activity, color: '#38BDF8' },
-          { label: 'ACTIVE_QUEUE', val: metrics.activeQueue, icon: Users, color: '#818CF8' },
-          { label: 'ATOMIC_SUCCESS', val: metrics.successCount, icon: Zap, color: '#4ade80' },
-          { label: 'LOCKED_REJECTIONS', val: metrics.rejectedCount, icon: ShieldAlert, color: '#ff453a' }
-        ].map((item, i) => (
-          <div key={i} className="glass-card p-8 border border-white/5 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: item.color }}></div>
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">{item.label}</span>
-              <item.icon size={18} style={{ color: item.color }} />
+      {/* Main Content Component */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        {/* Top Navbar */}
+        <header className="h-[60px] bg-white border-b border-[#e5e9f2] flex items-center justify-between px-6 shrink-0 z-10 shadow-sm">
+          <div className="flex items-center gap-4">
+            <Menu size={20} className="text-slate-400 cursor-pointer" onClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+            <div className="relative hidden md:block">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" placeholder="Search..." className="bg-[#f5f7fb] border-none rounded-2xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-300 w-64 text-slate-600" />
             </div>
-            <h2 className="text-5xl font-display tracking-tighter m-0">{item.val}</h2>
+            <span className="text-sm font-medium text-slate-500 hidden lg:block cursor-pointer">Mega Menu ▾</span>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Real-Time Pulse Chart */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="glass-card p-10 border border-white/5">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/40">GATE_BURST_TELEMETRY</h3>
-              <span className="text-[10px] font-mono text-white/20">UNITS: REQUESTS/SEC</span>
+          <div className="flex items-center gap-5 text-slate-500">
+            <div className="relative cursor-pointer hover:text-slate-700 transition-colors">
+              <Bell size={20} />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#3b7ddd] text-white text-[10px] flex items-center justify-center font-bold">4</span>
             </div>
-            <div style={{ height: '350px' }}>
-              <Line data={hartData} options={{ 
-                responsive: true, maintainAspectRatio: false, 
-                animation: { duration: 0 },
-                scales: { 
-                  y: { grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true, border: { display: false } }, 
-                  x: { grid: { display: false }, border: { display: false } } 
-                },
-                plugins: { legend: { display: false } }
-              }} />
+            <MessageSquare size={20} className="cursor-pointer hidden sm:block hover:text-slate-700 transition-colors"/>
+            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-bold cursor-pointer overflow-hidden border border-slate-200">
+               <img src="https://i.pravatar.cc/150?img=11" alt="Profile" className="w-full h-full object-cover" />
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors"
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
+        </header>
+
+        {/* Dashboard Main Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f5f7fb] p-6 lg:p-8">
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-[#495057] flex items-center gap-3">
+                E-Commerce <span className="font-normal text-slate-500">Dashboard</span>
+                {killSwitchActive && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase ml-2 flex items-center gap-1"><ShieldAlert size={12}/> Offline</span>}
+              </h1>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={resetMetrics} 
+                className="bg-white border text-[#495057] border-[#ced4da] px-4 py-1.5 rounded text-sm hover:bg-slate-50 transition shadow-sm flex items-center gap-1.5"
+              >
+                Reset Data
+              </button>
+              <button 
+                onClick={handleSimulateBurst} 
+                className="bg-white border text-[#495057] border-[#ced4da] px-4 py-1.5 rounded text-sm hover:bg-slate-50 transition shadow-sm flex items-center gap-1.5"
+              >
+                 Inject Load
+              </button>
+              <button 
+                onClick={() => setKillSwitchActive(!killSwitchActive)} 
+                className={`${killSwitchActive ? 'bg-green-500 hover:bg-green-600' : 'bg-[#3b7ddd] hover:bg-[#326abc]'} text-white px-4 py-1.5 rounded text-sm transition shadow-sm flex items-center gap-1.5`}
+              >
+                 {killSwitchActive ? 'Restore System' : 'Kill Switch'}
+              </button>
             </div>
           </div>
 
-          {/* New Pending Payments Verification Queue */}
-          <div className="glass-card p-10 border border-white/5">
-            <h3 className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/40 mb-8">PENDING_SETTLEMENTS</h3>
-            <div className="space-y-4">
-              {metrics.pendingPayments.filter(p => p.status === 'PENDING').length === 0 ? (
-                <div className="text-[10px] text-white/20 uppercase tracking-[0.2em] py-4">No pending settlements found.</div>
-              ) : (
-                metrics.pendingPayments.filter(p => p.status === 'PENDING').map(p => (
-                  <div key={p.id} className="bg-white/5 p-6 rounded-xl border border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <div className="bg-white text-black font-display text-xl px-4 py-2 rounded-lg tracking-widest">{p.ref}</div>
-                      <div>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest m-0 leading-tight">Identity: {p.customer?.name || 'UNKNOWN'}</p>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest m-0 leading-tight">Phone: {p.customer?.phone || 'N/A'}</p>
-                        <p className="text-sm font-bold text-white uppercase m-0 mt-1">${p.amount} — {p.productId}</p>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[
+              { label: 'Total Requests', val: metrics.totalRequests, icon: Activity, pct: '3.65%', pos: true },
+              { label: 'Active Queue', val: metrics.activeQueue, icon: Users, pct: '-5.25%', pos: false },
+              { label: 'Success (Verified)', val: metrics.successCount, icon: Zap, pct: '4.65%', pos: true },
+              { label: 'Rejected / Blocked', val: metrics.rejectedCount, icon: ShieldAlert, pct: '2.35%', pos: true }
+            ].map((stat, i) => (
+              <div key={i} className="bg-white rounded-lg p-6 shadow-sm border border-[#e5e9f2] flex flex-col">
+                <div className="flex justify-between items-start mb-4">
+                  <h5 className="text-[#6c757d] font-semibold text-sm">{stat.label}</h5>
+                  <div className="w-10 h-10 rounded-full bg-[#e8f1fb] text-[#3b7ddd] flex items-center justify-center shrink-0">
+                    <stat.icon size={20} />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-medium text-[#495057] mb-3">{stat.val}</h2>
+                <div className="flex items-center gap-2 text-xs mt-auto">
+                  <span className={`px-1.5 py-0.5 rounded font-bold ${stat.pos ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {stat.pos ? '+' : ''}{stat.pct}
+                  </span>
+                  <span className="text-[#adb5bd]">Since last week</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Chart */}
+            <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border border-[#e5e9f2]">
+              <div className="flex justify-between items-center mb-6">
+                <h5 className="text-[#495057] font-semibold">Telemetry Pulse</h5>
+                <div className="flex gap-2">
+                  <select className="border border-slate-200 rounded px-2 py-1 text-sm text-slate-600 bg-slate-50 outline-none">
+                    <option>Jan</option>
+                  </select>
+                  <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={20}/></button>
+                </div>
+              </div>
+              <div className="h-[300px] w-full">
+                 <Line data={chartData} options={{ 
+                  responsive: true, maintainAspectRatio: false, 
+                  animation: { duration: 0 },
+                  scales: { 
+                    y: { grid: { color: '#f8f9fa' }, ticks: { color: '#adb5bd', font: { size: 11 } }, border: { display:false } }, 
+                    x: { grid: { display: false }, ticks: { color: '#adb5bd', font: { size: 11 } }, border: { display:false } } 
+                  },
+                  plugins: { legend: { display: false } }
+                }} />
+              </div>
+            </div>
+
+            {/* Live Ledger (Replacing Sales by State in Reference) */}
+            <div className="bg-white rounded-lg p-0 shadow-sm border border-[#e5e9f2] flex flex-col overflow-hidden max-h-[400px]">
+              <div className="p-5 border-b border-[#e5e9f2] flex justify-between items-center bg-white z-10">
+                <h5 className="text-[#495057] font-semibold">Live Traffic Ledger</h5>
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 bg-slate-50/50">
+                {events.length === 0 ? (
+                  <div className="flex items-center justify-center p-8 text-sm text-slate-400">Waiting for data...</div>
+                ) : (
+                  [...events].reverse().map((ev) => (
+                    <div key={ev.id} className="flex gap-3 text-sm p-3 hover:bg-white rounded-lg transition-colors border-b border-transparent hover:border-slate-100">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {ev.type === 'CHECKOUT_START' ? <Activity size={14} className="text-[#3b7ddd]"/> : 
+                         ev.type === 'SUCCESS' ? <Zap size={14} className="text-green-500"/> : 
+                         <ShieldAlert size={14} className="text-red-500"/>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#495057] font-medium truncate">{ev.productId || 'GATEWAY'}</p>
+                        <p className="text-xs text-[#adb5bd]">{ev.type}</p>
+                      </div>
+                      <div className="text-xs text-[#adb5bd] whitespace-nowrap">
+                         {String(ev.timestamp).split('T')[1]?.split('.')[0] || '00:00:00'}
                       </div>
                     </div>
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={() => pushEvent({ type: 'PAYMENT_REJECTED', orderId: p.id })}
-                        className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all"
-                      >
-                        Reject
-                      </button>
-                      <button 
-                         onClick={() => pushEvent({ type: 'PAYMENT_VERIFIED', orderId: p.id })}
-                         className="bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-black px-6 py-2 rounded-lg text-[10px] font-bold uppercase transition-all"
-                      >
-                        Verify Payment
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Live Transaction Ledger */}
-        <div className="glass-card flex flex-col border border-white/5 overflow-hidden">
-          <div className="p-8 border-b border-white/5 flex justify-between items-center">
-            <h3 className="text-[11px] font-bold tracking-[0.3em] uppercase text-white/40">LIVE_GATE_LEDGER</h3>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-[9px] font-bold text-white/30 uppercase">Streaming</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px]">
-            {events.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-white/10 uppercase tracking-widest text-center px-10">
-                Waiting for incoming packets...
+                  ))
+                )}
               </div>
-            ) : (
-              events.map((ev) => (
-                <div key={ev.id} className="flex gap-4 mb-3 border-l border-white/5 pl-4 py-1 hover:bg-white/5 transition-colors">
-                  <span className="text-white/20">[{ev.timestamp}]</span>
-                  <span className={`${
-                    ev.type === 'CHECKOUT_START' ? 'text-blue-400' : 
-                    ev.type === 'SUCCESS' ? 'text-green-400' : 
-                    'text-red-400'
-                  }`}>
-                    {ev.type}
-                  </span>
-                  <span className="text-white/50">{ev.productId || 'GATE'}</span>
-                </div>
-              ))
-            )}
+            </div>
           </div>
-        </div>
+
+          {/* Pending Settlements Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-[#e5e9f2] mb-6 overflow-hidden">
+             <div className="p-5 border-b border-[#e5e9f2] flex justify-between items-center">
+                <h5 className="text-[#495057] font-semibold">Pending Settlements</h5>
+                <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={20}/></button>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#e5e9f2] text-xs uppercase text-[#adb5bd] bg-[#f8f9fa]">
+                      <th className="p-4 font-semibold">Reference</th>
+                      <th className="p-4 font-semibold">Customer</th>
+                      <th className="p-4 font-semibold">Amount</th>
+                      <th className="p-4 font-semibold">Product</th>
+                      <th className="p-4 font-semibold">Status</th>
+                      <th className="p-4 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.pendingPayments.filter(p => p.status === 'PENDING').length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="p-8 text-center text-[#adb5bd] text-sm py-12">
+                          <ShoppingBag size={32} className="mx-auto text-slate-200 mb-3" />
+                          No pending settlements requiring authorization.
+                        </td>
+                      </tr>
+                    ) : (
+                      metrics.pendingPayments.filter(p => p.status === 'PENDING').map(p => (
+                        <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="p-4 align-middle">
+                            <span className="text-sm font-medium text-[#495057]">{p.ref}</span>
+                          </td>
+                          <td className="p-4 align-middle">
+                             <div className="text-sm text-[#495057]">{p.customer?.name || 'Unknown'}</div>
+                             <div className="text-xs text-[#adb5bd]">{p.customer?.phone || 'N/A'}</div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <div className="text-sm font-semibold text-[#495057]">${p.amount}</div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <div className="text-sm text-[#6c757d]">{p.productId}</div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <span className="bg-[#e8f1fb] text-[#3b7ddd] px-2 py-1 rounded text-xs font-semibold">In Progress</span>
+                          </td>
+                          <td className="p-4 align-middle flex justify-end gap-2">
+                             <button 
+                               onClick={() => pushEvent({ type: 'PAYMENT_REJECTED', orderId: p.id })}
+                               className="px-3 py-1.5 text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 rounded transition"
+                             >
+                               Reject
+                             </button>
+                             <button 
+                               onClick={() => pushEvent({ type: 'PAYMENT_VERIFIED', orderId: p.id })}
+                               className="px-3 py-1.5 text-xs font-medium bg-[#3b7ddd] text-white hover:bg-[#326abc] rounded transition shadow-sm"
+                             >
+                               Verify
+                             </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+          </div>
+        </main>
       </div>
     </div>
   );
