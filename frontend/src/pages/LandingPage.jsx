@@ -13,7 +13,7 @@ const Timer = ({ seconds }) => {
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.05)',
+      background: 'rgba(0,0,0,0.9)',
       backdropFilter: 'blur(32px)',
       padding: '24px 44px',
       borderRadius: '32px',
@@ -22,7 +22,8 @@ const Timer = ({ seconds }) => {
       flexDirection: 'column',
       gap: '8px',
       pointerEvents: 'auto',
-      width: 'fit-content'
+      width: 'fit-content',
+      boxShadow: '0 24px 48px -12px rgba(0,0,0,0.3)'
     }}>
       <div className="flex items-center gap-4 mb-2">
         <div style={{ width: '10px', height: '10px', background: seconds > 0 ? '#ff3b30' : '#30d158', borderRadius: '50%', boxShadow: seconds > 0 ? '0 0 16px rgba(255, 59, 48, 0.6)' : '0 0 16px rgba(48, 209, 88, 0.6)' }} className={seconds > 0 ? "animate-pulse" : ""}></div>
@@ -379,9 +380,9 @@ const LandingPage = ({ addToCart, timeRemaining }) => {
   return (
     <div className="landing-wrapper">
       {/* Header Section */}
-      <section className="bg-white py-24 text-center border-b border-gray-100">
+      <section className="bg-white py-24 text-center border-b border-gray-100 flex flex-col items-center">
         <h1
-          className="text-black uppercase m-0 leading-none"
+          className="text-black uppercase m-0 leading-none mb-12"
           style={{
             fontSize: '5.3vw',
             fontWeight: '200',
@@ -392,6 +393,9 @@ const LandingPage = ({ addToCart, timeRemaining }) => {
         >
           The Dropping Zone
         </h1>
+        <div className="mt-8 scale-150 transform">
+           <Timer seconds={timeRemaining} />
+        </div>
       </section>
 
       {/* Dropping Soon Ticker Strip */}

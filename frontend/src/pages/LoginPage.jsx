@@ -17,14 +17,17 @@ const LoginPage = () => {
   };
 
   const submitLogin = async (credentials) => {
+    const identifier = (credentials.email || '').trim().toLowerCase();
+    const pass = (credentials.password || '').trim();
+
     // Hardcoded & Local Users Demo Bypass
     const localUsers = JSON.parse(localStorage.getItem('VEO_LOCAL_USERS') || '[]');
     const matchedUser = localUsers.find(u => 
-      (u.email === credentials.email || u.name.toLowerCase() === credentials.email.toLowerCase()) && 
-      u.password === credentials.password
+      (u.email.toLowerCase() === identifier || u.name.toLowerCase() === identifier) && 
+      u.password === pass
     );
 
-    if (credentials.email === 'lubaib' && credentials.password === '1234' || matchedUser) {
+    if (identifier === 'lubaib' && pass === '1234' || matchedUser) {
       const user = matchedUser || { id: 'demo-user', name: 'Lubaib', email: 'lubaib@demo.com', phone: '+91 99999 88888' };
       localStorage.setItem('token', 'hardcoded-demo-token');
       localStorage.setItem('user', JSON.stringify(user));
@@ -36,8 +39,8 @@ const LoginPage = () => {
     setError('');
     try {
       const res = await axios.post('http://localhost:3001/auth/login', { 
-        email: credentials.email, 
-        password: credentials.password 
+        email: identifier, 
+        password: pass 
       });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
@@ -47,13 +50,6 @@ const LoginPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    const demo = { email: 'lubaib', password: '1234' };
-    setEmail(demo.email);
-    setPassword(demo.password);
-    submitLogin(demo);
   };
 
   return (
@@ -128,15 +124,6 @@ const LoginPage = () => {
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </>
             )}
-          </button>
-
-          <button 
-            type="button"
-            onClick={handleDemoLogin}
-            className="mt-4 p-4 rounded-2xl border-2 border-slate-100 text-slate-900 font-bold text-sm tracking-wide hover:bg-slate-50 transition-all flex items-center justify-center gap-3"
-          >
-            <ShieldCheck size={18} className="text-slate-400" />
-            Quick Demo Access
           </button>
         </form>
 

@@ -21,6 +21,14 @@ const io = new Server(server, {
   }
 });
 
+let dropTimeRemaining = 60; // 1 minute
+const timerInterval = setInterval(() => {
+  if (dropTimeRemaining > 0) {
+    dropTimeRemaining--;
+  }
+  io.emit('sync_timer', dropTimeRemaining);
+}, 1000);
+
 // Initialize Worker
 initWorker(io);
 
@@ -41,6 +49,7 @@ let stats = {
   browsingUsers: 0,
   checkingOutUsers: 0,
   rejectedCount: 0,
+  totalRegisteredUsers: 0,
   stock: {
     'void-hoodie': 2,
     'vortex-kb': 2
@@ -51,17 +60,41 @@ let stats = {
   }
 };
 
-const broadcastStats = () => {
-  io.emit('stats_update', stats);
+const activeVisitors = new Set();
+
+const broadcastStats = async () => {
+  try {
+    const userCountResult = await query('SELECT COUNT(*) FROM users');
+    // +1 for the hardcoded 'lubaib' user
+    stats.totalRegisteredUsers = parseInt(userCountResult.rows[0].count) + 1;
+    stats.totalVisitors = activeVisitors.size;
+
+    // Sync from Redis to ensure Admin sees exactly what the Worker sees
+    const hoodieStock = await redis.get('inventory:void-hoodie');
+    const kbStock = await redis.get('inventory:vortex-kb');
+    
+    stats.stock['void-hoodie'] = parseInt(hoodieStock) || 0;
+    stats.stock['vortex-kb'] = parseInt(kbStock) || 0;
+
+    io.emit('stats_update', stats);
+  } catch (err) {
+    console.error('Error broadcasting stats:', err);
+    io.emit('stats_update', stats);
+  }
 };
+
+// Periodic broadcast to keep everything in sync
+setInterval(broadcastStats, 5000);
 
 // Socket.io connection logic
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   
-  // 1. Total Visitors tracking
-  stats.totalVisitors++;
+  activeVisitors.add(socket.id);
   broadcastStats();
+  
+  // Send current timer value immediately on connection
+  socket.emit('sync_timer', dropTimeRemaining);
 
   socket.on('join_room', (userId) => {
     socket.join(userId);
@@ -128,8 +161,40 @@ io.on('connection', (socket) => {
     broadcastStats();
   });
 
+  // 5. Payment Verification Link
+  socket.on('verify_payment', async (data) => {
+    const { userId, orderId, productId } = data;
+    
+    try {
+      // 1. Update database status
+      await query(
+        'UPDATE orders SET status = $1 WHERE id = $2',
+        ['success', orderId]
+      );
+
+      // 2. Deduct stock permanently from real-time tracker
+      stats.stock[productId] = Math.max(0, stats.stock[productId] - 1);
+      
+      // 3. Notify user
+      io.to(userId).emit('payment_success', { orderId });
+      console.log(`[VERIFIED] Admin verified order ${orderId} for user ${userId}`);
+    } catch (err) {
+      console.error('Verification DB error:', err);
+    }
+    
+    broadcastStats();
+  });
+
+  // 6. Admin Timer Controls
+  socket.on('adjust_timer', (seconds) => {
+    dropTimeRemaining = Math.max(0, dropTimeRemaining + seconds);
+    io.emit('sync_timer', dropTimeRemaining);
+    console.log(`[TIMER] Admin adjusted timer by ${seconds}s. New: ${dropTimeRemaining}s`);
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
+    activeVisitors.delete(socket.id);
     
     // Auto-cleanup on disconnect
     if (socket.isBrowsing) stats.browsingUsers--;

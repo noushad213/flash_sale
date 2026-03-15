@@ -12,16 +12,23 @@ import { Search, ShoppingBag, LayoutDashboard, Zap, LogIn, LogOut, Package, Lock
 import CartDrawer from './components/CartDrawer';
 import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
-import { TelemetryProvider } from './context/TelemetryContext';
+import { TelemetryProvider, useTelemetry } from './context/TelemetryContext';
 
 const Navigation = ({ toggleCart, cartCount }) => {
   const location = useLocation();
   const [user, setUser] = useState(null);
 
+  const { socket } = useTelemetry();
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, [location]);
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      setUser(parsed);
+      if (socket && parsed.id) {
+        socket.emit('join_room', parsed.id);
+      }
+    }
+  }, [location, socket]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -119,10 +126,14 @@ const Navigation = ({ toggleCart, cartCount }) => {
   );
 };
 
-const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart, timeRemaining }) => {
+const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart }) => {
   const location = useLocation();
   const isAdmin = location.pathname === '/admin';
   const toggleCart = () => setIsCartOpen(!isCartOpen);
+
+  // App internal timer is now driven by TelemetryProvider socket sync
+  const { metrics } = useTelemetry();
+  const timeRemaining = metrics.dropTimeRemaining;
 
   return (
     <div style={{ paddingTop: isAdmin ? '0' : '52px' }}>
@@ -142,7 +153,7 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/product/:productId" element={<ProductDetailPage />} />
         <Route path="/details/:productId" element={<DetailsPage addToCart={addToCart} timeRemaining={timeRemaining} />} />
-        <Route path="/checkout" element={<CheckoutPage timeRemaining={timeRemaining} />} />
+        <Route path="/checkout" element={<CheckoutPage timeRemaining={timeRemaining} cartItems={cartItems} />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -234,15 +245,6 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(15); // 15 seconds for testing
-
-  useEffect(() => {
-    if (timeRemaining <= 0) return;
-    const interval = setInterval(() => {
-      setTimeRemaining(prev => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timeRemaining]);
 
   const addToCart = (product) => {
     setCartItems(prev => [...prev, product]);
@@ -262,7 +264,6 @@ function App() {
           setIsCartOpen={setIsCartOpen}
           removeFromCart={removeFromCart}
           addToCart={addToCart}
-          timeRemaining={timeRemaining}
         />
       </Router>
     </TelemetryProvider>

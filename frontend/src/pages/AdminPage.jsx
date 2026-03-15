@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Activity, Zap, ShieldAlert,
-  Power, LayoutDashboard, ShoppingBag, Command, Menu, Search, LogOut
+  Power, LayoutDashboard, ShoppingBag, Command, Menu, Search, LogOut, Clock
 } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 import {
@@ -103,25 +103,27 @@ const AdminPage = () => {
            </div>
         </div>
 
-        <div className="flex-1 py-10 px-4 overflow-y-auto min-w-[280px]">
-          <div className="flex flex-col gap-2">
-            {[
-              { label: 'Overview', icon: LayoutDashboard, active: true },
-              { label: 'Live Traffic', icon: Activity, active: false },
-              { label: 'Stock Nodes', icon: ShoppingBag, active: false }
-            ].map((item, idx) => (
-              <div 
-                key={idx}
-                className={`flex items-center gap-4 px-5 py-4 rounded-[20px] transition-all cursor-pointer group ${item.active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'}`}
-              >
-                <item.icon size={18} />
-                <span className="text-xs font-bold uppercase tracking-widest">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="p-6 border-t border-slate-50 min-w-[280px]">
+          <div className="bg-slate-50 rounded-[28px] p-6 mb-6">
+             <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Drop Timer</span>
+                <Clock size={14} className="text-indigo-600" />
+             </div>
+             <div className="text-3xl font-light text-slate-900 mb-6 font-mono">
+                {Math.floor(metrics.dropTimeRemaining / 60)}:{String(metrics.dropTimeRemaining % 60).padStart(2, '0')}
+             </div>
+             <div className="flex gap-2">
+                <button 
+                  onClick={() => socket.emit('adjust_timer', -10)}
+                  className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black hover:bg-slate-100 transition-colors"
+                >-10S</button>
+                <button 
+                  onClick={() => socket.emit('adjust_timer', 10)}
+                  className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black hover:bg-slate-100 transition-colors"
+                >+10S</button>
+             </div>
+          </div>
+
           <button
             onClick={handleLogout}
             className="w-full py-4 rounded-[20px] bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2"
@@ -178,8 +180,8 @@ const AdminPage = () => {
           {/* Stats Hub */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             {[
-              { label: 'Network Traffic', value: metrics.totalVisitors, icon: Users, color: 'text-indigo-600', dot: 'bg-indigo-600' },
-              { label: 'Active Sessions', value: metrics.browsingUsers, icon: Activity, color: 'text-sky-500', dot: 'bg-sky-500' },
+              { label: 'Total Operators', value: metrics.totalRegisteredUsers || 1, icon: Users, color: 'text-indigo-600', dot: 'bg-indigo-600' },
+              { label: 'Live Visitors', value: metrics.totalVisitors, icon: Activity, color: 'text-sky-500', dot: 'bg-sky-500' },
               { label: 'Checkout Hub', value: metrics.checkingOutUsers, icon: Zap, color: 'text-violet-500', dot: 'bg-violet-500' },
               { label: 'Packet Drop', value: metrics.rejectedCount, icon: ShieldAlert, color: 'text-rose-500', dot: 'bg-rose-500' }
             ].map((stat, i) => (
@@ -222,7 +224,7 @@ const AdminPage = () => {
                 <div className="flex items-center justify-between mb-10">
                   <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Security Ledger</h5>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-4">
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-4 mb-10 border-b border-slate-50 pb-10">
                   {events.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-200">
                       <Search size={40} className="mb-4 opacity-50" />
@@ -244,6 +246,44 @@ const AdminPage = () => {
                     ))
                   )}
                 </div>
+
+                <div className="flex items-center justify-between mb-10">
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Pending Node Verification</h5>
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">{metrics.pendingPayments.filter(p => p.status === 'PENDING').length} Awaiting</span>
+                </div>
+                
+                <div className="space-y-4">
+                  {metrics.pendingPayments.filter(p => p.status === 'PENDING').length === 0 ? (
+                    <p className="text-center py-10 text-slate-400 text-[10px] font-black uppercase tracking-widest">All Nodes Reconciled</p>
+                  ) : (
+                    metrics.pendingPayments.filter(p => p.status === 'PENDING').map((p) => (
+                      <div key={p.id} className="flex items-center justify-between p-6 bg-slate-50 rounded-[24px] border border-slate-100 group">
+                        <div className="flex items-center gap-6">
+                          <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400">
+                             <Zap size={18} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-black uppercase text-slate-900 tracking-tight">{p.ref}</p>
+                            <p className="text-[9px] text-slate-400 uppercase font-bold tracking-widest">{p.id}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            socket.emit('verify_payment', { 
+                              userId: p.id.split('-')[1] || 'demo-user', // Fallback or logic to get user id
+                              orderId: p.id,
+                              productId: p.productId || 'void-hoodie'
+                            });
+                            pushEvent({ type: 'PAYMENT_VERIFIED', orderId: p.id });
+                          }}
+                          className="px-6 py-2.5 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-colors shadow-lg shadow-black/5"
+                        >
+                          Verify Node
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
@@ -255,30 +295,34 @@ const AdminPage = () => {
                 </div>
 
                 <div className="space-y-8">
-                   {Object.entries(metrics.stockRemaining).map(([id, count]) => (
-                     <div key={id} className="p-8 rounded-[32px] bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 transition-all">
-                        <div className="flex justify-between items-start mb-6">
-                          <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none">{id.replace('-', ' ')}</span>
-                          <div className="px-2.5 py-1 bg-emerald-500 rounded-full flex items-center gap-1.5">
-                             <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                             <span className="text-[8px] text-white font-black uppercase">Active</span>
+                   {Object.entries(metrics.stockRemaining).map(([id, count]) => {
+                     const reserved = metrics.reservations?.[id] || 0;
+                     const available = count - reserved;
+                     return (
+                      <div key={id} className="p-8 rounded-[32px] bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 transition-all">
+                          <div className="flex justify-between items-start mb-6">
+                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none">{id.replace('-', ' ')}</span>
+                            <div className="px-2.5 py-1 bg-emerald-500 rounded-full flex items-center gap-1.5">
+                                <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                                <span className="text-[8px] text-white font-black uppercase">Active</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-baseline gap-2 mb-6 text-slate-900">
-                           <span className="text-5xl font-light leading-none">{count}</span>
-                           <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Units Left</span>
-                        </div>
-                        <div className="space-y-3">
-                           <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
-                              <span>Allocation Progress</span>
-                              <span className={metrics.reservations?.[id] > 0 ? 'text-indigo-600' : ''}>{metrics.reservations?.[id] || 0} Reserved</span>
-                           </div>
-                           <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                              <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(count/2)*100}%` }} />
-                           </div>
-                        </div>
-                     </div>
-                   ))}
+                          <div className="flex items-baseline gap-2 mb-6 text-slate-900">
+                            <span className="text-5xl font-light leading-none">{available}</span>
+                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Units Left</span>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                <span>Allocation Progress</span>
+                                <span className={reserved > 0 ? 'text-indigo-600' : ''}>{reserved} Reserved</span>
+                            </div>
+                            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(available/2)*100}%` }} />
+                            </div>
+                          </div>
+                      </div>
+                     );
+                   })}
                 </div>
 
                 <div className="mt-16 p-8 rounded-[32px] bg-indigo-50/30 border border-indigo-100">

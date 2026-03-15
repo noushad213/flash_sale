@@ -2,16 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Cpu, Terminal, AlertTriangle, CheckCircle2, ChevronRight, Copy, Clock, Lock, CreditCard, Truck, User } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 
-const CheckoutPage = ({ timeRemaining }) => {
+const formatTime = (seconds) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+};
+
+const CheckoutPage = ({ timeRemaining, cartItems = [] }) => {
   const { socket, pushEvent, metrics } = useTelemetry();
   const [step, setStep] = useState(0); 
   const [isRejected, setIsRejected] = useState(false);
   const isLocked = timeRemaining > 0;
 
-  // For this logic, we'll assume they are checking out the first item in the cart
-  // or a default 'void-hoodie' if for some reason the cart is empty (direct link)
-  const productId = 'void-hoodie'; 
-
+  // Use the ID from the first item in cart or fallback
+  const firstItem = cartItems[0] || {};
+  const productId = firstItem.id || 'void-hoodie'; 
+  const productName = firstItem.name || 'VOID HOODIE';
   useEffect(() => {
     if (!isLocked && socket) {
       socket.emit('checkout_start', productId);
@@ -103,18 +109,70 @@ const CheckoutPage = ({ timeRemaining }) => {
   }, [loggedInUser.name]);
 
   useEffect(() => {
-    const currentOrder = metrics.pendingPayments.find(p => p.id === orderId);
-    if (currentOrder && currentOrder.status === 'VERIFIED') setStep(3);
-  }, [metrics.pendingPayments, orderId]);
+    if (socket) {
+      socket.on('payment_success', (data) => {
+        setStep(3);
+        pushEvent({ type: 'PAYMENT_SUCCESS', status: 'VERIFIED' });
+      });
+      return () => socket.off('payment_success');
+    }
+  }, [socket]);
 
-  const handleNext = (e) => {
+  const handleNext = async (e) => {
     e.preventDefault();
     if (step === 0) setStep(1);
     else if (step === 1) {
-      pushEvent({ type: 'RESERVE_STOCK', orderId, ref: orderRef, productId: 'void-hoodie', customer: shippingData });
-      setStep(2);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:3001'}/api/checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            productId: productId,
+            size: 'L' // Default size
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'queued') {
+          // Successfully entered the waitroom/queue
+          setStep(2);
+          pushEvent({ 
+            type: 'RESERVE_STOCK', 
+            orderId: data.jobId, 
+            ref: orderRef, 
+            productId: productId, 
+            customer: { ...shippingData, id: loggedInUser.id } 
+          });
+        } else if (data.status === 'sold_out') {
+          setIsRejected(true);
+        } else {
+          alert(data.message || 'System busy. Try again.');
+        }
+      } catch (err) {
+        console.error('Checkout error detail:', err);
+        alert('Checkout bridge offline.');
+      }
     }
   };
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('checkout_result', (data) => {
+        if (data.status === 'success') {
+          setStep(3);
+          pushEvent({ type: 'PAYMENT_SUCCESS', status: 'VERIFIED_BY_WORKER' });
+        } else if (data.status === 'error') {
+          alert(data.message);
+        }
+      });
+      return () => socket.off('checkout_result');
+    }
+  }, [socket]);
 
   const steps = ['Details', 'Payment', 'Review'];
 
@@ -197,20 +255,52 @@ const CheckoutPage = ({ timeRemaining }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-gray-500 text-xs uppercase tracking-widest animate-pulse">
+                  <div className="flex items-center justify-center gap-2 text-gray-500 text-xs uppercase tracking-widest animate-pulse mb-8">
                     <Clock size={14} /> Awaiting Verification...
                   </div>
+
+                  <button 
+                    onClick={() => {
+                      setStep(3);
+                      socket.emit('admin_event', { type: 'SUCCESS', productId: productId });
+                      pushEvent({ type: 'PAYMENT_SUCCESS', status: 'BYPASS_VERIFIED' });
+                    }}
+                    className="w-full py-4 border-2 border-black rounded-[20px] text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-xl shadow-black/5"
+                  >
+                    Direct System Bypass
+                  </button>
                 </div>
               </div>
             )}
 
             {step === 3 && (
               <div className="checkout-section text-center py-10">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 size={32} />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Confirmed</h2>
-                <p className="text-gray-500 text-sm mb-8">Thank you for your purchase. Your order ID is {orderId}.</p>
+                {metrics.stockRemaining[productId] > 0 ? (
+                  <>
+                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle2 size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Confirmed</h2>
+                    <p className="text-gray-500 text-sm mb-8">Thank you for your purchase. Your invoice has been generated.</p>
+                    <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left mb-8 font-mono">
+                       <p className="text-[10px] text-slate-400 uppercase mb-2">Invoice # {Math.random().toString(36).substring(7).toUpperCase()}</p>
+                       <p className="text-xs font-bold text-slate-900">{productName.toUpperCase()} — ₹11,000.00</p>
+                       <p className="text-[9px] text-slate-400 mt-4">Authorized by Node Cluster</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Zap size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Loyalty Reward Activated</h2>
+                    <p className="text-gray-500 text-sm mb-8">
+                       The {productName} has reached capacity, but your commitment has been noted. 
+                       <span className="block mt-4 font-bold text-black font-display">WE BELIEVE IN YOU.</span>
+                       As a thank you for participating in the drop, you've been granted Early Access to the next collection.
+                    </p>
+                  </>
+                )}
                 <button onClick={() => window.location.href = '/'} className="checkout-btn max-w-xs mx-auto">Return to Shop</button>
               </div>
             )}

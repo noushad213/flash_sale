@@ -15,6 +15,8 @@ export const TelemetryProvider = ({ children }) => {
     browsingUsers: 0,
     checkingOutUsers: 0,
     totalVisitors: 0,
+    totalRegisteredUsers: 1, // Start with 1 (Lubaib)
+    dropTimeRemaining: 60,
     pendingPayments: [], // { id, ref, amount, productId, status, timestamp }
     stockRemaining: {
       'void-hoodie': 2,
@@ -36,11 +38,19 @@ export const TelemetryProvider = ({ children }) => {
         checkingOutUsers: serverStats.checkingOutUsers,
         rejectedCount: serverStats.rejectedCount,
         stockRemaining: serverStats.stock,
-        reservations: serverStats.reservations
+        reservations: serverStats.reservations,
+        totalRegisteredUsers: serverStats.totalRegisteredUsers
       }));
     });
 
-    return () => socket.off('stats_update');
+    socket.on('sync_timer', (time) => {
+      setMetrics(prev => ({ ...prev, dropTimeRemaining: time }));
+    });
+
+    return () => {
+      socket.off('stats_update');
+      socket.off('sync_timer');
+    };
   }, []);
 
   const pushEvent = useCallback((event) => {

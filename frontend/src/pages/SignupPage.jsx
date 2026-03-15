@@ -17,10 +17,17 @@ const SignupPage = () => {
     setLoading(true);
     setError('');
     
-    // Simulate local DB persistence
     try {
+      // 1. Register on real Supabase Backend
+      const res = await axios.post('http://localhost:3001/auth/register', { 
+        name, 
+        email, 
+        password 
+      });
+
+      // 2. Also Sync to Local 'JSON' as requested
       const newUser = { 
-        id: `user_${Date.now()}`, 
+        id: res.data.user.id, 
         name, 
         email, 
         password, 
@@ -28,20 +35,17 @@ const SignupPage = () => {
       };
       
       const existingUsers = JSON.parse(localStorage.getItem('VEO_LOCAL_USERS') || '[]');
-      
-      if (existingUsers.find(u => u.email === email)) {
-        throw new Error('Email already exists');
+      if (!existingUsers.find(u => u.email === email)) {
+        existingUsers.push(newUser);
+        localStorage.setItem('VEO_LOCAL_USERS', JSON.stringify(existingUsers));
       }
-      
-      existingUsers.push(newUser);
-      localStorage.setItem('VEO_LOCAL_USERS', JSON.stringify(existingUsers));
       
       // Auto-login or redirect
       setTimeout(() => {
         navigate('/login');
       }, 500);
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      setError(err.response?.data?.error || err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
