@@ -211,7 +211,7 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(15); // 15 seconds for testing
 
   useEffect(() => {
     if (timeRemaining <= 0) return;

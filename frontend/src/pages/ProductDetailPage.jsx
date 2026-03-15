@@ -60,14 +60,14 @@ const ProductDetailPage = () => {
           description: 'The definitive silhouette. Heavyweight 500GSM black cotton with metallic finishes and custom hardware.',
           price: 11000,
           images: ['/hoodie_black_1.png', '/hoodie_black_2.png'],
-          drop_time: new Date(Date.now() + 30000).toISOString()
+          drop_time: new Date(Date.now() + 15000).toISOString()
         } : {
           id: productId,
           name: 'Cloud Drop Hoodie (White)',
           description: 'Pure aesthetic. Bone-white premium fleece with tonal branding.',
           price: 15000,
           images: ['/hoodie_white_1.png'],
-          drop_time: new Date(Date.now() + 120000).toISOString()
+          drop_time: new Date(Date.now() + 15000).toISOString()
         }
       }));
       setProduct(res.data);
