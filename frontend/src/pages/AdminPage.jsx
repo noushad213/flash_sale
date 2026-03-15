@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Activity, Zap, ShieldAlert,
-  RefreshCcw, Power, Play, LogOut,
-  Search, Bell, MessageSquare,
-  LayoutDashboard, ShoppingBag, User,
-  FileText, Calendar, Columns, MapPin, MoreHorizontal, Command, Menu
+  Power, LayoutDashboard, ShoppingBag, Command, Menu, Search, LogOut
 } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 import {
@@ -56,27 +53,46 @@ const AdminPage = () => {
 
   const handleSimulateBurst = () => {
     const products = ['void-hoodie', 'vortex-kb'];
+    // High-intensity burst to trigger backend rejections when stock is low
     for (let i = 0; i < 50; i++) {
       setTimeout(() => {
         const prod = products[Math.floor(Math.random() * products.length)];
-        pushEvent({ type: 'CHECKOUT_START', productId: prod, status: 'pending' });
+        
+        // 1. Emit to backend for real impact
+        socket.emit('checkout_start', prod);
+        
+        // 2. Push to local ledger for immediate visual feedback
+        pushEvent({ 
+          type: 'CHECKOUT_START', 
+          productId: prod, 
+          status: 'pending',
+          text: `BURST_PACKET: ${prod}`
+        });
 
+        // Simulate random success/fail responses in the ledger
         setTimeout(() => {
-          const success = Math.random() > 0.3;
+          const success = Math.random() > 0.4;
           pushEvent({
             type: success ? 'SUCCESS' : 'REJECTED',
             productId: prod,
             text: success ? `TRANSACTION_COMMIT: ${prod}` : `GATE_LOCKED: CONGESTION`
           });
-        }, Math.random() * 2000);
-      }, i * 50);
+          
+          if (success) {
+            socket.emit('admin_event', { type: 'SUCCESS', productId: prod });
+          } else {
+            socket.emit('admin_event', { type: 'REJECTED', productId: prod });
+          }
+        }, Math.random() * 1500 + 500);
+
+      }, i * 40); // 40ms intervals = 25 req/sec burst
     }
   };
 
   return (
     <div className="flex h-screen bg-[#f1f3f9] font-sans text-slate-900 overflow-hidden">
 
-      {/* Sidebar - Isolated from global styles */}
+      {/* Sidebar - Isolated Branding */}
       <aside 
         className={`bg-white border-r border-slate-200 flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-40 shadow-2xl shadow-slate-200/50 overflow-hidden`}
         style={{ width: isSidebarOpen ? '280px' : '0' }}
@@ -118,7 +134,7 @@ const AdminPage = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
 
-        {/* Top Navbar - Fixed & Refined */}
+        {/* Top Navbar - Clean & Focused */}
         <header className="h-[90px] bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10 shrink-0 z-30">
           <div className="flex items-center gap-8">
             <button 
@@ -255,7 +271,7 @@ const AdminPage = () => {
                         <div className="space-y-3">
                            <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
                               <span>Allocation Progress</span>
-                              <span className={metrics.reservations[id] > 0 ? 'text-indigo-600' : ''}>{metrics.reservations[id] || 0} Reserved</span>
+                              <span className={metrics.reservations?.[id] > 0 ? 'text-indigo-600' : ''}>{metrics.reservations?.[id] || 0} Reserved</span>
                            </div>
                            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                               <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(count/2)*100}%` }} />
