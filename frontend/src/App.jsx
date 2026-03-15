@@ -108,7 +108,7 @@ const Navigation = ({ toggleCart, cartCount }) => {
   );
 };
 
-const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart }) => {
+const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addToCart, timeRemaining }) => {
   const location = useLocation();
   const isAdmin = location.pathname === '/admin';
   const toggleCart = () => setIsCartOpen(!isCartOpen);
@@ -122,14 +122,15 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
           onClose={() => setIsCartOpen(false)} 
           cartItems={cartItems}
           onRemove={removeFromCart}
+          timeRemaining={timeRemaining}
         />
       )}
       
       <Routes>
-        <Route path="/" element={<LandingPage addToCart={addToCart} />} />
+        <Route path="/" element={<LandingPage addToCart={addToCart} timeRemaining={timeRemaining} />} />
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/product/:productId" element={<ProductDetailPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout" element={<CheckoutPage timeRemaining={timeRemaining} />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -210,6 +211,15 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutes in seconds
+
+  useEffect(() => {
+    if (timeRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeRemaining]);
 
   const addToCart = (product) => {
     setCartItems(prev => [...prev, product]);
@@ -229,6 +239,7 @@ function App() {
           setIsCartOpen={setIsCartOpen}
           removeFromCart={removeFromCart}
           addToCart={addToCart}
+          timeRemaining={timeRemaining}
         />
       </Router>
     </TelemetryProvider>
