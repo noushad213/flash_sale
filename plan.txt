@@ -1,0 +1,38 @@
+# MIDNIGHT — PROJECT IMPLEMENTATION PLAN: THE GATEKEEPER
+
+## PHASE 1: THE ATOMIC GATE (Checkout Infrastructure)
+Objective: Build the high-stakes checkout experience and the telemetry "talker".
+
+- [ ] 1.1 Create `CheckoutPage.jsx`.
+    - Implement the "Provisioning" sequence (Live logs of backend validation).
+    - Design a cinematic, high-pressure UI (Monospace logs + Atomic progress).
+    - Implement "The Gate" logic: Simulated race-condition handling.
+- [ ] 1.2 Implement Global Telemetry State.
+    - Create a central event emitter to track clicks, queue entries, and final sales.
+- [ ] 1.3 Routing Integration.
+    - Connect the "Checkout" button in the Cart Drawer to the new page.
+
+## PHASE 2: THE WAR ROOM (Admin Overwatch)
+Objective: Build the real-time monitoring dashboard that oversees the drop without interference.
+
+- [ ] 2.1 Refactor/Create `AdminDashboard.jsx`.
+    - Real-time "Pulse" Monitor: Visualizing requests per second (RPS).
+    - Status Trackers: Live counts for Clicks, Users in Queue, and Stock Remaining.
+    - Event Log: A scrolls-list of every success/rejection happening at "The Gate".
+- [ ] 2.2 Decision Controls.
+    - "Kill Switch": Ability to pause/resume the sale from the dashboard.
+    - Bot Detection UI: Visual signal for high RPS from specific simulated IPs.
+
+## PHASE 3: THE CHAOS SIMULATOR (Stress Testing)
+Objective: Prove the "Midnight Puzzle" is solved.
+
+- [ ] 3.1 Stress Test Engine.
+    - Add a "Simulate Drop Crowd" button in Admin.
+    - Simulate 5,000 requests hitting the gate in 3 seconds.
+- [ ] 3.2 Consistency Verification.
+    - UI check: Ensure inventory NEVER goes below 0.
+    - UI check: Ensure first-come-first-served logic is visible to the admin.
+
+---
+Current Status: PHASE 1.1 STARTING NOW.
+Next Action: Create `CheckoutPage.jsx` and styling.

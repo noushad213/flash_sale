@@ -8,6 +8,8 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import { Search, ShoppingBag, LayoutDashboard, Zap, LogIn, LogOut, Package, Lock } from 'lucide-react';
 import CartDrawer from './components/CartDrawer';
+import CheckoutPage from './pages/CheckoutPage';
+import { TelemetryProvider } from './context/TelemetryContext';
 
 const Navigation = ({ toggleCart, cartCount }) => {
   const location = useLocation();
@@ -121,8 +123,9 @@ function App() {
   const toggleCart = () => setIsCartOpen(!isCartOpen);
 
   return (
-    <Router>
-      <div style={{ paddingTop: '52px' }}>
+    <TelemetryProvider>
+      <Router>
+        <div style={{ paddingTop: '52px' }}>
         <Navigation toggleCart={toggleCart} cartCount={cartItems.length} />
         <CartDrawer 
           isOpen={isCartOpen} 
@@ -134,6 +137,7 @@ function App() {
           <Route path="/" element={<LandingPage addToCart={addToCart} />} />
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/product/:productId" element={<ProductDetailPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -173,6 +177,7 @@ function App() {
         </footer>
       </div>
     </Router>
+    </TelemetryProvider>
   );
 }
 

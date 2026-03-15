@@ -27,85 +27,86 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 100px)' }}>
+    <div className="auth-container">
+      <div className="bg-grid-aura"></div>
+      
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-panel p-10 w-full" 
-        style={{ maxWidth: '440px' }}
+        transition={{ duration: 0.5 }}
+        className="auth-card"
       >
-        <div className="text-center space-y-4 mb-10">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: 'linear-gradient(135deg, var(--accent-highlight), var(--accent-secondary))' }}>
-            <User className="text-white w-6 h-6" />
+        <div className="text-center mb-10">
+          <div className="flex justify-center mb-4">
+            <User className="text-white w-8 h-8" strokeWidth={1.5} />
           </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '800' }}>JOIN THE DROP</h2>
-          <p className="text-sm text-muted">Create an account to gain early access to limited releases.</p>
+          <h2 className="text-white text-3xl font-display uppercase tracking-widest mb-1">JOIN THE DROP</h2>
+          <p className="text-white/40 text-[11px] font-bold uppercase tracking-[0.2em]">REGISTER_NODE_0XF2</p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">Full Name</label>
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+        <form onSubmit={handleSignup} className="flex flex-col">
+          <div className="auth-input-group">
+            <label className="auth-label">Full Name</label>
+            <div className="auth-input-wrapper">
+              <User size={18} />
               <input 
                 type="text" 
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full glass-panel" 
-                style={{ padding: '14px 14px 14px 44px', borderRadius: '12px' }} 
+                className="auth-input" 
                 placeholder="John Drop"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <div className="auth-input-group">
+            <label className="auth-label">Email Address</label>
+            <div className="auth-input-wrapper">
+              <Mail size={18} />
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full glass-panel" 
-                style={{ padding: '14px 14px 14px 44px', borderRadius: '12px' }} 
+                className="auth-input" 
                 placeholder="you@example.com"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">Create Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <div className="auth-input-group">
+            <label className="auth-label">Password</label>
+            <div className="auth-input-wrapper">
+              <Lock size={18} />
               <input 
                 type="password" 
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full glass-panel" 
-                style={{ padding: '14px 14px 14px 44px', borderRadius: '12px' }} 
-                placeholder="Min. 8 characters"
+                className="auth-input" 
+                placeholder="••••••••"
               />
             </div>
           </div>
 
-          {error && <p className="text-xs text-red-500 font-bold">{error.toUpperCase()}</p>}
+          {error && <p className="text-[10px] text-red-500 font-bold tracking-widest text-center mb-4">{error.toUpperCase()}</p>}
 
           <button 
             type="submit" 
             disabled={loading}
-            className="glow-btn glow-btn-primary w-full" 
-            style={{ height: '54px', background: 'linear-gradient(135deg, var(--accent-highlight), var(--accent-secondary))' }}
+            className="auth-btn-primary"
           >
-            {loading ? 'CREATING ACCOUNT...' : 'REGISTER'} <ArrowRight className="w-4 h-4" />
+            {loading ? 'INITIALIZING...' : 'CREATE_ACCOUNT'} 
+            {!loading && <ArrowRight size={18} strokeWidth={2.5} />}
           </button>
         </form>
 
-        <p className="text-center text-sm text-muted mt-8">
-          Already have an account? <Link to="/login" className="text-primary font-bold" style={{ color: 'var(--accent-primary)', textDecoration: 'none' }}>Sign in</Link>
-        </p>
+        <div className="mt-12 text-center">
+          <p className="text-white/30 text-xs font-bold uppercase tracking-widest">
+            Already have an account? <Link to="/login" className="text-white hover:underline underline-offset-8">Sign in</Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );

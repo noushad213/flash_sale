@@ -1,0 +1,17 @@
+The Midnight Product Drop
+
+Thousands arrive. Only a few leave with the prize.
+Incident Report — Flash Sale Platform At exactly midnight the product went live. Within seconds thousands of users attempted to buy the same item. The servers did not crash. But the system failed in quieter ways. Orders appeared for items that did not exist. Inventory went negative. Users paid for products that were already gone. The Situation Your team has been asked to design a commerce system that survives such nights. Products may be few. Demand may be massive. When the clock strikes release time, the system must remain calm while the crowd arrives. What We Know
+
+    Many users will attempt checkout simultaneously.
+    Inventory is extremely limited.
+    The first successful buyers must receive the product.
+    Everyone else must be rejected cleanly.
+
+The Puzzle Somewhere inside your system, a gate must exist. A mechanism that ensures that no matter how many hands reach for the same item, only the correct number of purchases succeed. Whether this gate is a lock, a queue, a transaction boundary, or something else entirely is a question for the engineers. Things the Observers Will Watch For
+
+    Whether inventory ever becomes inconsistent
+    Whether simultaneous checkouts behave correctly
+    Whether the architecture anticipates real traffic bursts
+    Whether failure cases remain graceful
+

@@ -1,8 +1,15 @@
 import React from 'react';
 import { X, Trash2, ShoppingBag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CartDrawer = ({ isOpen, onClose, cartItems, onRemove }) => {
+  const navigate = useNavigate();
   const total = cartItems.reduce((acc, item) => acc + item.price, 0);
+
+  const handleCheckout = () => {
+    onClose();
+    navigate('/checkout');
+  };
 
   return (
     <>
@@ -58,7 +65,11 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemove }) => {
               <span className="text-[11px] font-bold uppercase tracking-widest">Total</span>
               <span className="text-[11px] font-bold">${total}</span>
             </div>
-            <button className="elliptical-btn w-full" style={{ background: '#000', color: '#fff' }}>
+            <button 
+              onClick={handleCheckout}
+              className="elliptical-btn w-full" 
+              style={{ background: '#000', color: '#fff' }}
+            >
               CHECKOUT
             </button>
           </div>

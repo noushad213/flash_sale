@@ -28,78 +28,89 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 100px)' }}>
+    <div className="auth-container">
+      <div className="mesh-gradient-bg"></div>
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel p-10 w-full" 
-        style={{ maxWidth: '440px' }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="auth-card"
       >
-        <div className="text-center space-y-4 mb-10">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}>
-            <Zap className="text-white w-6 h-6" />
+        <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="p-1 rounded-full border border-accent/20"
+            >
+              <Zap className="text-accent w-10 h-10" strokeWidth={1} />
+            </motion.div>
           </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '800' }}>WELCOME BACK</h2>
-          <p className="text-sm text-muted">Initialize your session to catch the next drop.</p>
+          <h2 className="text-white text-4xl font-display uppercase tracking-[0.1em] mb-2">AUTH_GATEWAY</h2>
+          <p className="text-accent/60 text-[10px] font-bold uppercase tracking-[0.4em]">Initialize Protocol 0XAF32</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+        <form onSubmit={handleLogin} className="flex flex-col">
+          <div className="auth-input-group">
+            <label className="auth-label">Identity_Credential</label>
+            <div className="auth-input-wrapper">
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full glass-panel" 
-                style={{ padding: '14px 14px 14px 44px', borderRadius: '12px' }} 
-                placeholder="name@company.com"
+                className="auth-input" 
+                placeholder="name@node.infrastructure"
               />
+              <Mail size={18} />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted uppercase tracking-widest">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <div className="auth-input-group">
+            <label className="auth-label">Security_Key</label>
+            <div className="auth-input-wrapper">
               <input 
                 type="password" 
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full glass-panel" 
-                style={{ padding: '14px 14px 14px 44px', borderRadius: '12px' }} 
+                className="auth-input" 
                 placeholder="••••••••"
               />
+              <Lock size={18} />
             </div>
           </div>
 
-          {error && <p className="text-xs text-red-500 font-bold">{error.toUpperCase()}</p>}
+          {error && <p className="text-[10px] text-red-400 font-bold tracking-widest text-center mb-6">ERR_GATEWAY: {error.toUpperCase()}</p>}
 
           <button 
             type="submit" 
             disabled={loading}
-            className="glow-btn glow-btn-primary w-full" 
-            style={{ height: '54px' }}
+            className="auth-btn-primary"
           >
-            {loading ? 'AUTHENTICATING...' : 'SIGN IN'} <ArrowRight className="w-4 h-4" />
+            {loading ? 'VALIDATING...' : 'ACCESS_SYSTEM'} 
+            {!loading && <ArrowRight size={18} strokeWidth={2.5} />}
           </button>
 
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-[#020617] px-2 text-muted font-bold">Or continue with</span></div>
+          <div className="auth-divider">
+            <span>OR_OAUTH_LINK</span>
           </div>
 
-          <button type="button" className="glow-btn w-full" style={{ height: '54px', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-            <Github className="w-5 h-5" /> GITHUB
+          <button 
+            type="button" 
+            className="auth-btn-secondary"
+          >
+            <Github size={20} /> SYNC_GITHUB
           </button>
         </form>
 
-        <p className="text-center text-sm text-muted mt-8">
-          New to the drop? <Link to="/signup" className="text-primary font-bold" style={{ color: 'var(--accent-primary)', textDecoration: 'none' }}>Register here</Link>
-        </p>
+        <div className="mt-12 text-center">
+          <p className="text-white/20 text-[9px] font-bold uppercase tracking-widest leading-loose">
+            No authorized node detected? <br />
+            <Link to="/signup" className="text-accent hover:text-white transition-colors underline underline-offset-8">REQUEST_PROVISIONING</Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
