@@ -1,4 +1,45 @@
-@tailwind base;
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-strip {
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  padding: 12px 0;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+}
+
+.ticker-content {
+  display: flex;
+  animation: marquee 30s linear infinite;
+  min-width: 200%;
+}
+
+.ticker-item {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ticker-dot {
+  width: 6px;
+  height: 6px;
+  background: #ff3b30;
+  border-radius: 50%;
+  align-self: center;
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.4);
+}
 @tailwind components;
 @tailwind utilities;
 

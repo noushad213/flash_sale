@@ -96,6 +96,18 @@ const LandingPage = ({ addToCart, timeRemaining }) => {
         </h1>
       </section>
 
+      {/* Dropping Soon Ticker Strip */}
+      <div className="ticker-strip">
+        <div className="ticker-content">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="ticker-item">
+              <div className="ticker-dot" style={{ background: isDropped ? '#30d158' : '#ff3b30' }} />
+              <span>{isDropped ? 'Drop Successful' : 'Dropping Soon'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* First Full Screen Image: Interactive Hoodie Gallery */}
       <section id="hoodie" className="panel-full relative w-full overflow-hidden bg-black" style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
