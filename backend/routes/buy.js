@@ -38,6 +38,17 @@ router.get('/product/:productId', async (req, res) => {
   }
 });
 
+router.get('/products', async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT id, name, description, price, total_inventory, remaining_inventory, drop_time, images FROM products ORDER BY created_at ASC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Could not fetch products' });
+  }
+});
+
 router.get('/orders', async (req, res) => {
   try {
     const result = await query('SELECT * FROM orders ORDER BY created_at DESC');

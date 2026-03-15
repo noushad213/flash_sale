@@ -16,31 +16,28 @@ const ProductListPage = () => {
 
   const fetchProducts = async () => {
     try {
+      const res = await axios.get(`${API_BASE}/products`);
+      if (res.data && res.data.length > 0) {
+        setProducts(res.data);
+      } else {
+        // Fallback mock
+        throw new Error('No products found');
+      }
+    } catch (err) {
+      console.warn('Failed to fetch products from backend, using fallback.', err.message);
+      // Fallback 
       const ids = [
         '00000000-0000-0000-0000-000000000000',
-        '11111111-1111-1111-1111-111111111111'
+        '11111111-1111-1111-1111-111111111111',
+        '22222222-2222-2222-2222-222222222222',
+        '33333333-3333-3333-3333-333333333333'
       ];
-      
-      const res = await Promise.all(ids.map(id => 
-        axios.get(`${API_BASE}/product/${id}`).catch(() => ({
-          data: id === ids[0] ? {
-            id: ids[0],
-            name: 'Midnight Drop Hoodie',
-            tag: 'V1.0 // OUTERWEAR',
-            price: 89.99,
-            image: '/hoodie_light.png'
-          } : {
-            id: ids[1],
-            name: 'Cloud Drop Hoodie',
-            tag: 'V1.0 // ESSENTIALS',
-            price: 95.00,
-            image: '/hoodie_white_1.png'
-          }
-        }))
-      ));
-      setProducts(res.map(r => r.data));
-    } catch (err) {
-      console.error('Failed to fetch products');
+      setProducts([
+        { id: ids[0], name: 'Midnight Drop Hoodie (Black)', tag: 'V1.0 // OUTERWEAR', price: 89.99, image: '/hoodie_black_1.png' },
+        { id: ids[1], name: 'Cloud Drop Hoodie (White)', tag: 'V1.0 // ESSENTIALS', price: 95.00, image: '/hoodie_white_1.png' },
+        { id: ids[2], name: 'Vortex Mechanical Keyboard', tag: 'V1.0 // HARDWARE', price: 149.00, image: '/keyboard.png' },
+        { id: ids[3], name: 'Aerolite Gaming Mouse', tag: 'V1.0 // HARDWARE', price: 79.00, image: '/mouse.png' }
+      ]);
     } finally {
       setLoading(false);
     }

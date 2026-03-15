@@ -54,22 +54,29 @@ const AdminPage = () => {
     }]
   };
 
-  const handleSimulateBurst = () => {
-    const products = ['void-hoodie', 'vortex-kb'];
-    for (let i = 0; i < 50; i++) {
-      setTimeout(() => {
-        const prod = products[Math.floor(Math.random() * products.length)];
-        pushEvent({ type: 'CHECKOUT_START', productId: prod, status: 'pending' });
-        
-        setTimeout(() => {
-          const success = Math.random() > 0.3;
-          pushEvent({
-            type: success ? 'SUCCESS' : 'REJECTED',
-            productId: prod,
-            text: success ? `TRANSACTION_COMMIT: ${prod}` : `GATE_LOCKED: CONGESTION`
-          });
-        }, Math.random() * 2000);
-      }, i * 50);
+  const handleSimulateBurst = async () => {
+    try {
+      // Real backend simulation
+      await fetch('http://localhost:3001/api/simulate/traffic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count: 50, productId: '00000000-0000-0000-0000-000000000000' })
+      });
+    } catch (err) {
+      console.error('Simulation failed:', err);
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      resetMetrics();
+      await fetch('http://localhost:3001/api/simulate/reset-inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: '00000000-0000-0000-0000-000000000000', count: 100 })
+      });
+    } catch (err) {
+      console.error('Reset failed:', err);
     }
   };
 

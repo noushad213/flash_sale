@@ -10,6 +10,7 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import { Search, ShoppingBag, LayoutDashboard, Zap, LogIn, LogOut, Package, Lock } from 'lucide-react';
 import CartDrawer from './components/CartDrawer';
 import CheckoutPage from './pages/CheckoutPage';
+import ProfilePage from './pages/ProfilePage';
 import { TelemetryProvider } from './context/TelemetryContext';
 
 const Navigation = ({ toggleCart, cartCount }) => {
@@ -76,7 +77,10 @@ const Navigation = ({ toggleCart, cartCount }) => {
         <div className="flex items-center gap-4">
           <div>
             {user ? (
-              <button onClick={handleLogout} className="nav-link font-bold">SIG_OUT</button>
+              <div className="flex items-center gap-4">
+                <Link to="/profile" className="nav-link font-bold text-accent">USER_LEDGER</Link>
+                <button onClick={handleLogout} className="nav-link font-bold">SIG_OUT</button>
+              </div>
             ) : (
               <Link to="/login" className="nav-link" style={{ fontWeight: '700' }}>GATEWAY_AUTH</Link>
             )}
@@ -134,6 +138,7 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
       
       {!isAdmin && (
