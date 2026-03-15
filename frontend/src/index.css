@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap');
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -40,11 +42,8 @@
   align-self: center;
   box-shadow: 0 0 10px rgba(255, 59, 48, 0.4);
 }
-@tailwind components;
-@tailwind utilities;
 
 /* index.css - Apple-style "Midnight" Drop Infrastructure */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap');
 
 :root {
   --font-display: 'Bebas Neue', 'Inter', -apple-system, sans-serif;

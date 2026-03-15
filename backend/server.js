@@ -21,9 +21,10 @@ const io = new Server(server, {
   }
 });
 
-let dropTimeRemaining = 60; // 1 minute
+let dropTimeRemaining = 9999; // Waiting — Admin clicks RST to start 20s countdown
 const timerInterval = setInterval(() => {
-  if (dropTimeRemaining > 0) {
+  // Only count down if below 9999 (i.e. Admin has started the clock)
+  if (dropTimeRemaining > 0 && dropTimeRemaining < 9999) {
     dropTimeRemaining--;
   }
   io.emit('sync_timer', dropTimeRemaining);
@@ -99,6 +100,11 @@ io.on('connection', (socket) => {
   socket.on('join_room', (userId) => {
     socket.join(userId);
     console.log(`User ${userId} joined room`);
+  });
+
+  // Allow clients to request current timer state
+  socket.on('get_timer', () => {
+    socket.emit('sync_timer', dropTimeRemaining);
   });
 
   // 2. Browsing Telemetry
@@ -189,7 +195,58 @@ io.on('connection', (socket) => {
   socket.on('adjust_timer', (seconds) => {
     dropTimeRemaining = Math.max(0, dropTimeRemaining + seconds);
     io.emit('sync_timer', dropTimeRemaining);
-    console.log(`[TIMER] Admin adjusted timer by ${seconds}s. New: ${dropTimeRemaining}s`);
+    console.log(`[TIMER] Admin adjusted by ${seconds}s. New: ${dropTimeRemaining}s`);
+  });
+
+  // Reset timer to exactly 20 seconds — this STARTS the countdown
+  socket.on('reset_timer', () => {
+    dropTimeRemaining = 20;
+    io.emit('sync_timer', dropTimeRemaining);
+    console.log(`[TIMER] Admin STARTED the 20s countdown`);
+  });
+
+  // 7. Atomic buy — server is the authority, not the frontend
+  socket.on('buy_attempt', async ({ productId }) => {
+    try {
+      const key = `inventory:${productId}`;
+      
+      // Safety: read current value first to catch issues
+      const currentRaw = await redis.get(key);
+      const current = parseInt(currentRaw);
+      console.log(`[BUY_ATTEMPT] ${socket.id} wants ${productId}. Redis says: "${currentRaw}" (parsed: ${current})`);
+
+      // If key is missing/corrupted, initialize from stats
+      if (isNaN(current) || currentRaw === null) {
+        const fallback = stats.stock[productId] ?? 2;
+        await redis.set(key, String(fallback));
+        console.log(`[BUY_ATTEMPT] Key missing, initialized to ${fallback}`);
+      }
+
+      const newVal = await redis.decr(key);
+      console.log(`[BUY_ATTEMPT] After DECR: ${newVal}`);
+      
+      if (newVal >= 0) {
+        // Success
+        stats.stock[productId] = newVal;
+        if (socket.checkoutProduct === productId) {
+          stats.reservations[productId] = Math.max(0, stats.reservations[productId] - 1);
+          stats.checkingOutUsers = Math.max(0, stats.checkingOutUsers - 1);
+          socket.checkoutProduct = null;
+        }
+        socket.emit('buy_result', { success: true, productId, remaining: newVal });
+        console.log(`[BUY ✓] ${socket.id} got ${productId}. Remaining: ${newVal}`);
+      } else {
+        // Out of stock — restore to 0
+        await redis.set(key, '0');
+        stats.stock[productId] = 0;
+        socket.emit('buy_result', { success: false, productId, reason: 'SOLD_OUT' });
+        console.log(`[BUY ✗] ${socket.id} rejected — ${productId} sold out`);
+      }
+    } catch (err) {
+      console.error('[BUY_ATTEMPT ERROR]', err);
+      socket.emit('buy_result', { success: false, productId, reason: 'SERVER_ERROR' });
+    }
+    broadcastStats();
   });
 
   socket.on('disconnect', () => {

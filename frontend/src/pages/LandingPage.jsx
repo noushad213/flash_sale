@@ -26,19 +26,23 @@ const Timer = ({ seconds }) => {
       boxShadow: '0 24px 48px -12px rgba(0,0,0,0.3)'
     }}>
       <div className="flex items-center gap-4 mb-2">
-        <div style={{ width: '10px', height: '10px', background: seconds > 0 ? '#ff3b30' : '#30d158', borderRadius: '50%', boxShadow: seconds > 0 ? '0 0 16px rgba(255, 59, 48, 0.6)' : '0 0 16px rgba(48, 209, 88, 0.6)' }} className={seconds > 0 ? "animate-pulse" : ""}></div>
+        <div style={{ width: '10px', height: '10px', background: seconds > 0 && seconds < 9999 ? '#ff3b30' : '#30d158', borderRadius: '50%', boxShadow: seconds > 0 && seconds < 9999 ? '0 0 16px rgba(255, 59, 48, 0.6)' : '0 0 16px rgba(48, 209, 88, 0.6)' }} className={seconds > 0 && seconds < 9999 ? "animate-pulse" : ""}></div>
         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.4em' }}>
-          {seconds > 0 ? 'Drop Window Active' : 'Drop Successful'}
+          {seconds >= 9999 ? 'Awaiting Drop Signal' : seconds > 0 ? 'Drop Window Active' : 'Drop Live — Buy Now'}
         </span>
       </div>
       <span style={{ color: '#fff', fontSize: '80px', fontWeight: '200', fontFamily: 'var(--font-display)', letterSpacing: '0.05em', lineHeight: '1' }}>
-        {seconds > 0 ? formatTime(seconds) : 'LIVE'}
+        {seconds >= 9999 ? '⏳' : seconds > 0 ? formatTime(seconds) : 'LIVE'}
       </span>
     </div>
   );
 };
 
 const HoodieSequence = ({ timeRemaining, addToCart }) => {
+  const { metrics } = useTelemetry();
+  const hoodieStock = metrics.stockRemaining['void-hoodie'] ?? 2;
+  const hoodieReserved = metrics.reservations?.['void-hoodie'] ?? 0;
+  const hoodieAvailable = Math.max(0, hoodieStock - hoodieReserved);
   const targetRef = useRef(null);
   const canvasRef = useRef(null);
   const imagesRef = useRef([]);
@@ -144,9 +148,15 @@ const HoodieSequence = ({ timeRemaining, addToCart }) => {
           <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
             Void<br />Hoodie
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
-            Heavyweight blackout knit. Engineered for the deep archive. Distributed node verification compliant.
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: '0 0 12px 0' }}>
+            Heavyweight blackout knit. Engineered for the deep archive.
           </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: hoodieAvailable > 0 ? '#30d158' : '#ff3b30', boxShadow: hoodieAvailable > 0 ? '0 0 12px rgba(48,209,88,0.8)' : '0 0 12px rgba(255,59,48,0.8)', flexShrink: 0 }} />
+            <span style={{ color: '#fff', fontSize: '12px', fontWeight: '900', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+              {hoodieAvailable > 0 ? `${hoodieAvailable} UNIT${hoodieAvailable !== 1 ? 'S' : ''} LEFT` : 'SOLD OUT'}
+            </span>
+          </div>
         </div>
 
         {/* Brand Overlay - Bottom Right */}

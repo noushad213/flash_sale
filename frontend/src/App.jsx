@@ -131,9 +131,30 @@ const AppContent = ({ cartItems, isCartOpen, setIsCartOpen, removeFromCart, addT
   const isAdmin = location.pathname === '/admin';
   const toggleCart = () => setIsCartOpen(!isCartOpen);
 
-  // App internal timer is now driven by TelemetryProvider socket sync
-  const { metrics } = useTelemetry();
-  const timeRemaining = metrics.dropTimeRemaining;
+  const { metrics, socket } = useTelemetry();
+  const [timeRemaining, setTimeRemaining] = useState(9999); // 9999 = waiting for admin to start
+
+  useEffect(() => {
+    // When server sends a sync (RST or initial value), snap to it
+    if (!socket) return;
+    const handleSync = (t) => setTimeRemaining(t);
+    socket.on('sync_timer', handleSync);
+    // Request current timer immediately
+    socket.emit('get_timer');
+    return () => socket.off('sync_timer', handleSync);
+  }, [socket]);
+
+  useEffect(() => {
+    // Only run local countdown when in active range (1-9998)
+    if (timeRemaining <= 0 || timeRemaining >= 9999) return;
+    const tick = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) { clearInterval(tick); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [Math.min(timeRemaining, 1)]); // restart when crossing 0↔1+
 
   return (
     <div style={{ paddingTop: isAdmin ? '0' : '52px' }}>

@@ -2,31 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Activity, Zap, ShieldAlert,
-  Power, LayoutDashboard, ShoppingBag, Command, Menu, Search, LogOut, Clock
+  Power, Command, Search, Clock, Package, BarChart2, LogOut
 } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
+  Chart as ChartJS, CategoryScale, LinearScale,
+  PointElement, LineElement, Title, Tooltip, Legend, Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement,
-  Title, Tooltip, Legend, Filler
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const AdminPage = () => {
   const { events, metrics, resetMetrics, pushEvent, socket } = useTelemetry();
   const [killSwitchActive, setKillSwitchActive] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -34,252 +23,319 @@ const AdminPage = () => {
     navigate('/');
   };
 
+  const timerVal = metrics.dropTimeRemaining;
+  const isCountingDown = timerVal > 0 && timerVal < 9999;
+  const isLive = timerVal === 0;
+
+  const timerDisplay = timerVal >= 9999
+    ? '⏳ STANDBY'
+    : isLive
+    ? '🔴 LIVE'
+    : `${Math.floor(timerVal / 60)}:${String(timerVal % 60).padStart(2, '0')}`;
+
   const chartData = {
     labels: metrics.rps.map((_, i) => `${i}s`),
     datasets: [{
       label: 'Requests',
       data: metrics.rps,
-      borderColor: '#6366f1', // Indigo accent
-      backgroundColor: 'rgba(99, 102, 241, 0.05)',
+      borderColor: '#818cf8',
+      backgroundColor: 'rgba(129,140,248,0.08)',
       fill: true,
       tension: 0.4,
-      pointRadius: metrics.rps.map((r, i) => i % 5 === 0 && i !== 0 ? 4 : 0),
-      pointBackgroundColor: '#6366f1',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
+      pointRadius: 0,
       borderWidth: 2
     }]
   };
 
   const handleSimulateBurst = () => {
     const products = ['void-hoodie', 'vortex-kb'];
-    // High-intensity burst to trigger backend rejections when stock is low
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 30; i++) {
       setTimeout(() => {
         const prod = products[Math.floor(Math.random() * products.length)];
-        
-        // 1. Emit to backend for real impact
         socket.emit('checkout_start', prod);
-        
-        // 2. Push to local ledger for immediate visual feedback
-        pushEvent({ 
-          type: 'CHECKOUT_START', 
-          productId: prod, 
-          status: 'pending',
-          text: `BURST_PACKET: ${prod}`
-        });
-
-        // Simulate random success/fail responses in the ledger
+        pushEvent({ type: 'CHECKOUT_START', productId: prod, text: `BURST: ${prod}` });
         setTimeout(() => {
           const success = Math.random() > 0.4;
-          pushEvent({
-            type: success ? 'SUCCESS' : 'REJECTED',
-            productId: prod,
-            text: success ? `TRANSACTION_COMMIT: ${prod}` : `GATE_LOCKED: CONGESTION`
-          });
-          
-          if (success) {
-            socket.emit('admin_event', { type: 'SUCCESS', productId: prod });
-          } else {
-            socket.emit('admin_event', { type: 'REJECTED', productId: prod });
-          }
-        }, Math.random() * 1500 + 500);
-
-      }, i * 40); // 40ms intervals = 25 req/sec burst
+          pushEvent({ type: success ? 'SUCCESS' : 'REJECTED', productId: prod });
+          socket.emit('admin_event', { type: success ? 'SUCCESS' : 'REJECTED', productId: prod });
+        }, Math.random() * 1200 + 300);
+      }, i * 50);
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#f1f3f9] font-sans text-slate-900 overflow-hidden">
+    <div style={{ display: 'flex', height: '100vh', background: '#0a0a0f', color: '#e2e8f0', fontFamily: 'Inter, -apple-system, sans-serif', overflow: 'hidden' }}>
 
-      {/* Sidebar - Isolated Branding */}
-      <aside 
-        className={`bg-white border-r border-slate-200 flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-40 shadow-2xl shadow-slate-200/50 overflow-hidden`}
-        style={{ width: isSidebarOpen ? '280px' : '0' }}
-      >
-        <div className="p-10 flex items-center justify-center border-b border-slate-50 min-w-[280px]">
-           <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-             <Command size={24} className="text-white" />
-           </div>
+      {/* ── SIDEBAR ── */}
+      <aside style={{
+        width: '260px', flexShrink: 0,
+        background: 'linear-gradient(180deg, #0f0f1a 0%, #0a0a14 100%)',
+        borderRight: '1px solid rgba(99,102,241,0.15)',
+        display: 'flex', flexDirection: 'column',
+        padding: '0',
+        boxShadow: '4px 0 32px rgba(0,0,0,0.5)'
+      }}>
+        {/* Logo */}
+        <div style={{ padding: '28px 24px', borderBottom: '1px solid rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 20px rgba(99,102,241,0.4)'
+          }}>
+            <Command size={18} color="#fff" />
+          </div>
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '0.2em', color: '#fff', textTransform: 'uppercase' }}>Midnight</div>
+            <div style={{ fontSize: '9px', color: 'rgba(99,102,241,0.8)', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700 }}>Admin Terminal</div>
+          </div>
         </div>
 
-        <div className="p-6 border-t border-slate-50 min-w-[280px]">
-          <div className="bg-slate-50 rounded-[28px] p-6 mb-6">
-             <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Drop Timer</span>
-                <Clock size={14} className="text-indigo-600" />
-             </div>
-             <div className="text-3xl font-light text-slate-900 mb-6 font-mono">
-                {Math.floor(metrics.dropTimeRemaining / 60)}:{String(metrics.dropTimeRemaining % 60).padStart(2, '0')}
-             </div>
-             <div className="flex gap-2">
-                <button 
-                  onClick={() => socket.emit('adjust_timer', -10)}
-                  className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black hover:bg-slate-100 transition-colors"
-                >-10S</button>
-                <button 
-                  onClick={() => socket.emit('adjust_timer', 10)}
-                  className="flex-1 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black hover:bg-slate-100 transition-colors"
-                >+10S</button>
-             </div>
+        {/* Timer Block */}
+        <div style={{ padding: '20px', flex: 1 }}>
+          <div style={{
+            background: 'rgba(99,102,241,0.07)',
+            border: '1px solid rgba(99,102,241,0.2)',
+            borderRadius: '16px', padding: '20px', marginBottom: '16px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <span style={{ fontSize: '9px', fontWeight: 900, color: 'rgba(148,163,184,0.7)', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Drop Timer</span>
+              <Clock size={12} color={isLive ? '#4ade80' : isCountingDown ? '#f87171' : '#6366f1'} />
+            </div>
+
+            <div style={{
+              fontSize: '32px', fontWeight: 200, fontFamily: 'monospace',
+              color: isLive ? '#4ade80' : isCountingDown ? '#f87171' : '#94a3b8',
+              letterSpacing: '0.05em', marginBottom: '16px',
+              textShadow: isLive ? '0 0 20px rgba(74,222,128,0.5)' : isCountingDown ? '0 0 20px rgba(248,113,113,0.5)' : 'none'
+            }}>
+              {timerDisplay}
+            </div>
+
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {[
+                { label: '-10S', action: () => socket.emit('adjust_timer', -10), color: '#374151' },
+                { label: 'RST', action: () => socket.emit('reset_timer'), color: '#3730a3', glow: true },
+                { label: '+10S', action: () => socket.emit('adjust_timer', 10), color: '#374151' },
+              ].map(btn => (
+                <button key={btn.label} onClick={btn.action} style={{
+                  flex: 1, padding: '8px 4px',
+                  background: btn.glow ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : 'rgba(255,255,255,0.05)',
+                  border: btn.glow ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '8px', color: '#fff', fontSize: '9px', fontWeight: 900,
+                  cursor: 'pointer', letterSpacing: '0.1em',
+                  boxShadow: btn.glow ? '0 0 16px rgba(99,102,241,0.3)' : 'none',
+                  transition: 'all 0.2s'
+                }}>
+                  {btn.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="w-full py-4 rounded-[20px] bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2"
-          >
-            <Power size={14} /> Exit Admin
+          {/* Stat mini tiles */}
+          {[
+            { label: 'Operators', value: metrics.totalRegisteredUsers || 1, color: '#818cf8' },
+            { label: 'Online', value: metrics.totalVisitors, color: '#38bdf8' },
+            { label: 'Checkout', value: metrics.checkingOutUsers, color: '#a78bfa' },
+            { label: 'Rejected', value: metrics.rejectedCount, color: '#f87171' },
+          ].map(s => (
+            <div key={s.label} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 14px', borderRadius: '10px', marginBottom: '6px',
+              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)'
+            }}>
+              <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{s.label}</span>
+              <span style={{ fontSize: '18px', fontWeight: 300, color: s.color, fontFamily: 'monospace' }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Exit */}
+        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(99,102,241,0.1)' }}>
+          <button onClick={handleLogout} style={{
+            width: '100%', padding: '12px',
+            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+            borderRadius: '12px', color: '#f87171', fontSize: '9px', fontWeight: 900,
+            cursor: 'pointer', letterSpacing: '0.2em', textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            transition: 'all 0.2s'
+          }}>
+            <LogOut size={12} /> Exit Admin
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      {/* ── MAIN ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* Top Navbar - Clean & Focused */}
-        <header className="h-[90px] bg-white/70 backdrop-blur-xl border-b border-white flex items-center justify-between px-10 shrink-0 z-30">
-          <div className="flex items-center gap-8">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-3 bg-white hover:bg-slate-50 rounded-2xl transition-all border border-slate-100 shadow-sm text-slate-600 active:scale-95"
-            >
-              <Menu size={20} />
-            </button>
+        {/* Top Bar */}
+        <header style={{
+          height: '64px', flexShrink: 0,
+          background: 'rgba(10,10,20,0.9)', backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(99,102,241,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 32px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px rgba(74,222,128,0.8)', animation: 'pulse 2s infinite' }} />
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Operations Terminal</span>
           </div>
-
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col items-end px-4">
-              <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Lead Operator</span>
-              <span className="text-xs font-bold text-slate-900 px-4 py-2 bg-slate-100/50 rounded-xl">Noushad_Admin</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={resetMetrics} style={{
+                padding: '7px 14px', background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px',
+                color: '#94a3b8', fontSize: '9px', fontWeight: 800, cursor: 'pointer',
+                letterSpacing: '0.15em', textTransform: 'uppercase'
+              }}>Clear Log</button>
+              <button onClick={handleSimulateBurst} style={{
+                padding: '7px 14px', background: 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))',
+                border: '1px solid rgba(99,102,241,0.3)', borderRadius: '8px',
+                color: '#818cf8', fontSize: '9px', fontWeight: 800, cursor: 'pointer',
+                letterSpacing: '0.15em', textTransform: 'uppercase'
+              }}>Simulate</button>
+              <button onClick={() => setKillSwitchActive(!killSwitchActive)} style={{
+                padding: '7px 14px',
+                background: killSwitchActive ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+                border: killSwitchActive ? '1px solid rgba(74,222,128,0.3)' : '1px solid rgba(239,68,68,0.3)',
+                borderRadius: '8px',
+                color: killSwitchActive ? '#4ade80' : '#f87171',
+                fontSize: '9px', fontWeight: 800, cursor: 'pointer',
+                letterSpacing: '0.15em', textTransform: 'uppercase'
+              }}>{killSwitchActive ? 'Resume' : 'Emergency Stop'}</button>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: '16px' }}>
+              <div style={{ fontSize: '9px', color: '#4ade80', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Lead Operator</div>
+              <div style={{ fontSize: '12px', color: '#e2e8f0', fontWeight: 600 }}>Lubaib_Admin</div>
             </div>
           </div>
         </header>
 
-        {/* Dashboard Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-10 custom-scrollbar">
+        {/* Content */}
+        <main style={{ flex: 1, overflow: 'auto', padding: '28px 32px' }}>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-14 gap-8">
-            <div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-                Operations <span className="text-slate-300 font-light italic">Terminal</span>
-              </h1>
-              <p className="text-sm text-slate-400 font-medium mt-1">Real-time node synchronization & inventory lifecycle.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={resetMetrics} className="px-6 py-3 rounded-2xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm">Clear Log</button>
-              <button onClick={handleSimulateBurst} className="px-6 py-3 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-100">Run Simulation</button>
-              <button
-                onClick={() => setKillSwitchActive(!killSwitchActive)}
-                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${killSwitchActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
-              >
-                {killSwitchActive ? 'Resume Network' : 'Emergency Stop'}
-              </button>
-            </div>
-          </div>
+          {/* Live User Nodes */}
+          <div style={{
+            background: 'rgba(15,15,26,0.8)', border: '1px solid rgba(99,102,241,0.15)',
+            borderRadius: '20px', padding: '20px', marginBottom: '24px',
+            display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap'
+          }}>
+            <span style={{ fontSize: '9px', fontWeight: 900, color: '#475569', letterSpacing: '0.2em', textTransform: 'uppercase', marginRight: '8px' }}>Live Nodes:</span>
 
-          {/* Stats Hub */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            {[
-              { label: 'Total Operators', value: metrics.totalRegisteredUsers || 1, icon: Users, color: 'text-indigo-600', dot: 'bg-indigo-600' },
-              { label: 'Live Visitors', value: metrics.totalVisitors, icon: Activity, color: 'text-sky-500', dot: 'bg-sky-500' },
-              { label: 'Checkout Hub', value: metrics.checkingOutUsers, icon: Zap, color: 'text-violet-500', dot: 'bg-violet-500' },
-              { label: 'Packet Drop', value: metrics.rejectedCount, icon: ShieldAlert, color: 'text-rose-500', dot: 'bg-rose-500' }
-            ].map((stat, i) => (
-              <div key={i} className="bg-white border border-slate-200/60 rounded-[32px] p-10 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all group">
-                <div className="flex justify-between items-start mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full ${stat.dot}`} />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</span>
-                  </div>
-                  <stat.icon size={18} className={`${stat.color} opacity-40 group-hover:opacity-100 transition-opacity`} />
+            {/* Admin always shown */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))',
+              border: '1px solid rgba(99,102,241,0.3)', borderRadius: '100px',
+              padding: '6px 14px 6px 6px'
+            }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 900, color: '#fff' }}>LB</div>
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: 800, color: '#e2e8f0', lineHeight: 1 }}>Lubaib</div>
+                <div style={{ fontSize: '8px', color: '#818cf8', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Admin</div>
+              </div>
+            </div>
+
+            {Array.from({ length: Math.max(0, metrics.browsingUsers) }).map((_, i) => (
+              <div key={`b${i}`} style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)',
+                borderRadius: '100px', padding: '6px 14px 6px 6px'
+              }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 900, color: '#fff' }}>U{i+2}</div>
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#e2e8f0', lineHeight: 1 }}>Op-0{i+2}</div>
+                  <div style={{ fontSize: '8px', color: '#38bdf8', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Browsing</div>
                 </div>
-                <h2 className="text-6xl font-light tracking-tighter text-slate-900">{stat.value.toLocaleString()}</h2>
               </div>
             ))}
+
+            {Array.from({ length: Math.max(0, metrics.checkingOutUsers) }).map((_, i) => (
+              <div key={`c${i}`} style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)',
+                borderRadius: '100px', padding: '6px 14px 6px 6px',
+                boxShadow: '0 0 12px rgba(167,139,250,0.15)'
+              }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>🔥</div>
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#e2e8f0', lineHeight: 1 }}>Node Active</div>
+                  <div style={{ fontSize: '8px', color: '#a78bfa', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Checkout</div>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px rgba(74,222,128,0.8)' }} />
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#4ade80' }}>{metrics.totalVisitors} Online</span>
+            </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-10">
-            {/* Live Visualization */}
-            <div className="lg:col-span-2 space-y-10">
-              <div className="bg-white border border-slate-200/60 rounded-[40px] p-10 shadow-sm">
-                <div className="flex items-center justify-between mb-12">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Load Distribution</h5>
-                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Live Monitor</span>
+          {/* Main Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px' }}>
+
+            {/* LEFT COL */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              {/* Chart */}
+              <div style={{
+                background: 'rgba(15,15,26,0.8)', border: '1px solid rgba(99,102,241,0.15)',
+                borderRadius: '20px', padding: '24px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 900, color: '#475569', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Request Volume</span>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: '#818cf8', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', padding: '4px 10px', borderRadius: '100px', letterSpacing: '0.1em' }}>LIVE</span>
                 </div>
-                <div className="h-[400px]">
+                <div style={{ height: '200px' }}>
                   <Line data={chartData} options={{
                     responsive: true, maintainAspectRatio: false,
                     animation: { duration: 0 },
                     scales: {
-                      y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: 'rgba(0,0,0,0.3)', font: { size: 10, weight: 'bold' } }, border: { display: false } },
-                      x: { grid: { display: false }, ticks: { color: 'rgba(0,0,0,0.3)', font: { size: 10, weight: 'bold' } } }
+                      y: { grid: { color: 'rgba(99,102,241,0.06)' }, ticks: { color: '#334155', font: { size: 9, weight: 'bold' } }, border: { display: false } },
+                      x: { grid: { display: false }, ticks: { color: '#334155', font: { size: 9, weight: 'bold' } } }
                     },
                     plugins: { legend: { display: false } }
                   }} />
                 </div>
               </div>
 
-              {/* Transaction Stream */}
-              <div className="bg-white border border-slate-200/60 rounded-[40px] p-10 shadow-sm">
-                <div className="flex items-center justify-between mb-10">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Security Ledger</h5>
+              {/* Event Ledger */}
+              <div style={{
+                background: 'rgba(15,15,26,0.8)', border: '1px solid rgba(99,102,241,0.15)',
+                borderRadius: '20px', padding: '24px', flex: 1
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 900, color: '#475569', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Transaction Ledger</span>
+                  <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 700 }}>{events.length} events</span>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-4 mb-10 border-b border-slate-50 pb-10">
+                <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                   {events.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-200">
-                      <Search size={40} className="mb-4 opacity-50" />
-                      <p className="text-[11px] font-black uppercase tracking-widest">No Active Packets</p>
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#1e293b' }}>
+                      <Search size={28} style={{ margin: '0 auto 8px', opacity: 0.3 }} />
+                      <p style={{ fontSize: '9px', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#334155' }}>No packets yet</p>
                     </div>
                   ) : (
-                    [...events].reverse().map((ev) => (
-                      <div key={ev.id} className="flex items-center justify-between py-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors px-4 rounded-xl">
-                        <div className="flex items-center gap-6">
-                          <span className="text-[10px] font-mono text-slate-300">[{String(ev.timestamp).split('T')[1]?.split('.')[0] || '00:00:00'}]</span>
-                          <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">{ev.productId || 'CORE_SYSTEM'}</span>
+                    [...events].reverse().map(ev => (
+                      <div key={ev.id} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '10px 12px', borderRadius: '10px', marginBottom: '4px',
+                        background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.03)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ fontSize: '9px', fontFamily: 'monospace', color: '#334155' }}>{ev.timestamp}</span>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>{ev.productId || 'SYSTEM'}</span>
                         </div>
-                        <span className={`text-[9px] font-black uppercase px-3 py-1.5 rounded-full border ${ev.type === 'SUCCESS' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                            ev.type === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'
-                          }`}>
-                          {ev.type}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between mb-10">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Pending Node Verification</h5>
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">{metrics.pendingPayments.filter(p => p.status === 'PENDING').length} Awaiting</span>
-                </div>
-                
-                <div className="space-y-4">
-                  {metrics.pendingPayments.filter(p => p.status === 'PENDING').length === 0 ? (
-                    <p className="text-center py-10 text-slate-400 text-[10px] font-black uppercase tracking-widest">All Nodes Reconciled</p>
-                  ) : (
-                    metrics.pendingPayments.filter(p => p.status === 'PENDING').map((p) => (
-                      <div key={p.id} className="flex items-center justify-between p-6 bg-slate-50 rounded-[24px] border border-slate-100 group">
-                        <div className="flex items-center gap-6">
-                          <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400">
-                             <Zap size={18} />
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-black uppercase text-slate-900 tracking-tight">{p.ref}</p>
-                            <p className="text-[9px] text-slate-400 uppercase font-bold tracking-widest">{p.id}</p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            socket.emit('verify_payment', { 
-                              userId: p.id.split('-')[1] || 'demo-user', // Fallback or logic to get user id
-                              orderId: p.id,
-                              productId: p.productId || 'void-hoodie'
-                            });
-                            pushEvent({ type: 'PAYMENT_VERIFIED', orderId: p.id });
-                          }}
-                          className="px-6 py-2.5 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-colors shadow-lg shadow-black/5"
-                        >
-                          Verify Node
-                        </button>
+                        <span style={{
+                          fontSize: '8px', fontWeight: 900, padding: '3px 10px', borderRadius: '100px',
+                          textTransform: 'uppercase', letterSpacing: '0.1em',
+                          background: ev.type === 'SUCCESS' || ev.type === 'PAYMENT_SUCCESS' ? 'rgba(74,222,128,0.1)' :
+                                      ev.type === 'REJECTED' ? 'rgba(248,113,113,0.1)' : 'rgba(129,140,248,0.1)',
+                          color: ev.type === 'SUCCESS' || ev.type === 'PAYMENT_SUCCESS' ? '#4ade80' :
+                                 ev.type === 'REJECTED' ? '#f87171' : '#818cf8',
+                          border: `1px solid ${ev.type === 'SUCCESS' || ev.type === 'PAYMENT_SUCCESS' ? 'rgba(74,222,128,0.2)' :
+                                  ev.type === 'REJECTED' ? 'rgba(248,113,113,0.2)' : 'rgba(129,140,248,0.2)'}`
+                        }}>{ev.type}</span>
                       </div>
                     ))
                   )}
@@ -287,53 +343,91 @@ const AdminPage = () => {
               </div>
             </div>
 
-            {/* Allocation Engine */}
-            <div className="space-y-10">
-              <div className="bg-white border border-slate-200/60 rounded-[40px] p-10 shadow-sm h-full">
-                <div className="flex items-center justify-between mb-12">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Inventory Node</h5>
-                </div>
+            {/* RIGHT COL */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-                <div className="space-y-8">
-                   {Object.entries(metrics.stockRemaining).map(([id, count]) => {
-                     const reserved = metrics.reservations?.[id] || 0;
-                     const available = count - reserved;
-                     return (
-                      <div key={id} className="p-8 rounded-[32px] bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 transition-all">
-                          <div className="flex justify-between items-start mb-6">
-                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none">{id.replace('-', ' ')}</span>
-                            <div className="px-2.5 py-1 bg-emerald-500 rounded-full flex items-center gap-1.5">
-                                <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                                <span className="text-[8px] text-white font-black uppercase">Active</span>
-                            </div>
-                          </div>
-                          <div className="flex items-baseline gap-2 mb-6 text-slate-900">
-                            <span className="text-5xl font-light leading-none">{available}</span>
-                            <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Units Left</span>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                <span>Allocation Progress</span>
-                                <span className={reserved > 0 ? 'text-indigo-600' : ''}>{reserved} Reserved</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(available/2)*100}%` }} />
-                            </div>
-                          </div>
+              {/* Inventory */}
+              <div style={{
+                background: 'rgba(15,15,26,0.8)', border: '1px solid rgba(99,102,241,0.15)',
+                borderRadius: '20px', padding: '24px'
+              }}>
+                <div style={{ fontSize: '10px', fontWeight: 900, color: '#475569', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '20px' }}>Inventory Node</div>
+                {Object.entries(metrics.stockRemaining).map(([id, count]) => {
+                  const reserved = metrics.reservations?.[id] || 0;
+                  const available = Math.max(0, count - reserved);
+                  const pct = (available / 2) * 100;
+                  return (
+                    <div key={id} style={{
+                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
+                      borderRadius: '14px', padding: '16px', marginBottom: '12px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{id.replace('-', ' ')}</span>
+                        <div style={{
+                          width: '6px', height: '6px', borderRadius: '50%',
+                          background: available > 0 ? '#4ade80' : '#f87171',
+                          boxShadow: available > 0 ? '0 0 8px rgba(74,222,128,0.6)' : '0 0 8px rgba(248,113,113,0.6)'
+                        }} />
                       </div>
-                     );
-                   })}
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '40px', fontWeight: 200, color: available > 0 ? '#e2e8f0' : '#f87171', lineHeight: 1, fontFamily: 'monospace' }}>{available}</span>
+                        <span style={{ fontSize: '9px', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>left</span>
+                      </div>
+                      <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: '99px',
+                          background: available > 0 ? 'linear-gradient(90deg,#6366f1,#8b5cf6)' : '#f87171',
+                          width: `${pct}%`, transition: 'width 0.5s ease'
+                        }} />
+                      </div>
+                      {reserved > 0 && (
+                        <div style={{ fontSize: '8px', color: '#a78bfa', marginTop: '6px', fontWeight: 700 }}>{reserved} reserved</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pending Verifications */}
+              <div style={{
+                background: 'rgba(15,15,26,0.8)', border: '1px solid rgba(99,102,241,0.15)',
+                borderRadius: '20px', padding: '24px', flex: 1
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 900, color: '#475569', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Confirmations</span>
+                  {metrics.pendingPayments.filter(p => p.status === 'PENDING').length > 0 && (
+                    <span style={{ fontSize: '8px', fontWeight: 900, color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', padding: '3px 8px', borderRadius: '100px' }}>
+                      {metrics.pendingPayments.filter(p => p.status === 'PENDING').length} pending
+                    </span>
+                  )}
                 </div>
 
-                <div className="mt-16 p-8 rounded-[32px] bg-indigo-50/30 border border-indigo-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <ShieldAlert size={16} className="text-indigo-600" />
-                    <span className="text-[10px] font-black uppercase text-indigo-900 tracking-widest">Node Policy</span>
+                {metrics.pendingPayments.filter(p => p.status === 'PENDING').length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 0', color: '#1e293b' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#334155' }}>All Confirmed</div>
                   </div>
-                  <p className="text-[11px] text-indigo-900/60 leading-relaxed font-medium">
-                    Automated reconciliation is enabled. All reservations are verified against current node health before final commit.
-                  </p>
-                </div>
+                ) : (
+                  metrics.pendingPayments.filter(p => p.status === 'PENDING').map(p => (
+                    <div key={p.id} style={{
+                      background: 'rgba(251,191,36,0.04)', border: '1px solid rgba(251,191,36,0.12)',
+                      borderRadius: '12px', padding: '12px', marginBottom: '8px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '10px', fontWeight: 800, color: '#e2e8f0' }}>{p.ref}</div>
+                        <div style={{ fontSize: '8px', color: '#64748b', fontFamily: 'monospace' }}>{p.productId}</div>
+                      </div>
+                      <button onClick={() => {
+                        socket.emit('verify_payment', { userId: p.id.split('-')[1] || 'demo', orderId: p.id, productId: p.productId || 'void-hoodie' });
+                        pushEvent({ type: 'PAYMENT_VERIFIED', orderId: p.id });
+                      }} style={{
+                        padding: '6px 12px', background: 'linear-gradient(135deg,#6366f1,#7c3aed)',
+                        border: 'none', borderRadius: '8px', color: '#fff',
+                        fontSize: '8px', fontWeight: 900, cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase'
+                      }}>Verify</button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -30,6 +30,16 @@ export const TelemetryProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    // On connect / reconnect, ask server for current timer value
+    socket.on('connect', () => {
+      socket.emit('get_timer');
+    });
+
+    // If already connected (first render), request immediately
+    if (socket.connected) {
+      socket.emit('get_timer');
+    }
+
     socket.on('stats_update', (serverStats) => {
       setMetrics(prev => ({
         ...prev,
@@ -48,6 +58,7 @@ export const TelemetryProvider = ({ children }) => {
     });
 
     return () => {
+      socket.off('connect');
       socket.off('stats_update');
       socket.off('sync_timer');
     };
