@@ -6,6 +6,8 @@ require('dotenv').config();
 const buyRoutes = require('./routes/buy');
 const authRoutes = require('./auth');
 const simulateRoutes = require('./routes/simulate');
+const { query } = require('./db');
+const redis = require('./redis');
 
 const http = require('http');
 const { Server } = require('socket.io');
