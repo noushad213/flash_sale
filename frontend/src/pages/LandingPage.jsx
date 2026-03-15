@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
+import { useTelemetry } from '../context/TelemetryContext';
 
 const Timer = ({ seconds }) => {
   const formatTime = (totalSeconds) => {
@@ -11,8 +12,8 @@ const Timer = ({ seconds }) => {
   };
 
   return (
-    <div style={{ 
-      background: 'rgba(255,255,255,0.05)', 
+    <div style={{
+      background: 'rgba(255,255,255,0.05)',
       backdropFilter: 'blur(32px)',
       padding: '24px 44px',
       borderRadius: '32px',
@@ -67,16 +68,16 @@ const HoodieSequence = ({ timeRemaining, addToCart }) => {
   return (
     <section id="hoodie" ref={targetRef} style={{ height: '300vh', position: 'relative' }}>
       <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden' }}>
-        <img 
-          src={framePath} 
-          alt="Void Hoodie Sequence" 
+        <img
+          src={framePath}
+          alt="Void Hoodie Sequence"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
 
         {/* Product Info - Top Left */}
         <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
           <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
-            Void<br/>Hoodie
+            Void<br />Hoodie
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
             Heavyweight blackout knit. Engineered for the deep archive. Distributed node verification compliant.
@@ -84,24 +85,24 @@ const HoodieSequence = ({ timeRemaining, addToCart }) => {
         </div>
 
         {/* Brand Overlay - Bottom Right */}
-        <div style={{ 
-          position: 'absolute', 
-          bottom: '0', 
-          right: '0', 
-          zIndex: 40, 
-          background: '#000', 
+        <div style={{
+          position: 'absolute',
+          bottom: '0',
+          right: '0',
+          zIndex: 40,
+          background: '#000',
           padding: '28px 60px',
           borderTopLeftRadius: '40px',
-          display: 'flex', 
-          alignItems: 'center', 
+          display: 'flex',
+          alignItems: 'center',
           gap: '24px',
           boxShadow: '-10px -10px 40px rgba(0,0,0,0.5)'
         }}>
-          <span style={{ 
-            color: '#fff', 
-            fontSize: '28px', 
-            fontWeight: '900', 
-            letterSpacing: '0.15em', 
+          <span style={{
+            color: '#fff',
+            fontSize: '28px',
+            fontWeight: '900',
+            letterSpacing: '0.15em',
             fontFamily: 'var(--font-display)',
             lineHeight: '1'
           }}>MD</span>
@@ -114,7 +115,7 @@ const HoodieSequence = ({ timeRemaining, addToCart }) => {
 
         {/* Action Buttons - Bottom Center */}
         <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: '24px' }}>
-          <button 
+          <button
             onClick={handleAddHoodie}
             className="elliptical-btn"
           >
@@ -160,16 +161,16 @@ const KeyboardSequence = ({ timeRemaining, addToCart }) => {
   return (
     <section id="keyboard" ref={targetRef} style={{ height: '300vh', position: 'relative' }}>
       <div style={{ position: 'sticky', top: 0, height: '100vh', width: '100%', overflow: 'hidden' }}>
-        <img 
-          src={framePath} 
-          alt="Vortex Keyboard Sequence" 
+        <img
+          src={framePath}
+          alt="Vortex Keyboard Sequence"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
 
         {/* Product Info - Top Left */}
         <div style={{ position: 'absolute', top: '48px', left: '48px', zIndex: 20, pointerEvents: 'none', textAlign: 'left' }}>
           <h2 className="font-display uppercase mb-2" style={{ fontSize: 'min(8vw, 96px)', lineHeight: '0.8', tracking: '-0.02em', color: '#fff', margin: 0 }}>
-            Vortex<br/>Keyboard
+            Vortex<br />Keyboard
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3em', maxWidth: '300px', lineHeight: '1.6', margin: 0 }}>
             Mechanical precision. Double-shot PBT keycaps. Distributed node verification compliant.
@@ -177,24 +178,24 @@ const KeyboardSequence = ({ timeRemaining, addToCart }) => {
         </div>
 
         {/* Brand Overlay - Bottom Right */}
-        <div style={{ 
-          position: 'absolute', 
-          bottom: '0', 
-          right: '0', 
-          zIndex: 40, 
-          background: '#000', 
+        <div style={{
+          position: 'absolute',
+          bottom: '0',
+          right: '0',
+          zIndex: 40,
+          background: '#000',
           padding: '28px 60px',
           borderTopLeftRadius: '40px',
-          display: 'flex', 
-          alignItems: 'center', 
+          display: 'flex',
+          alignItems: 'center',
           gap: '24px',
           boxShadow: '-10px -10px 40px rgba(0,0,0,0.5)'
         }}>
-          <span style={{ 
-            color: '#fff', 
-            fontSize: '28px', 
-            fontWeight: '900', 
-            letterSpacing: '0.15em', 
+          <span style={{
+            color: '#fff',
+            fontSize: '28px',
+            fontWeight: '900',
+            letterSpacing: '0.15em',
             fontFamily: 'var(--font-display)',
             lineHeight: '1'
           }}>MD</span>
@@ -207,7 +208,7 @@ const KeyboardSequence = ({ timeRemaining, addToCart }) => {
 
         {/* Action Buttons - Bottom Center */}
         <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 30, display: 'flex', gap: '24px' }}>
-          <button 
+          <button
             onClick={handleAddKeyboard}
             className="elliptical-btn"
           >
@@ -224,9 +225,18 @@ const KeyboardSequence = ({ timeRemaining, addToCart }) => {
   );
 };
 
+
 const LandingPage = ({ addToCart, timeRemaining }) => {
   const location = useLocation();
   const isDropped = timeRemaining <= 0;
+  const { socket } = useTelemetry();
+
+  useEffect(() => {
+    if (socket) {
+      socket.emit('browsing_start');
+      return () => socket.emit('browsing_stop');
+    }
+  }, [socket]);
 
   useEffect(() => {
     if (location.hash) {
@@ -242,11 +252,11 @@ const LandingPage = ({ addToCart, timeRemaining }) => {
     <div className="landing-wrapper">
       {/* Header Section */}
       <section className="bg-white py-24 text-center border-b border-gray-100">
-        <h1 
+        <h1
           className="text-black uppercase m-0 leading-none"
-          style={{ 
-            fontSize: '5.3vw', 
-            fontWeight: '200', 
+          style={{
+            fontSize: '5.3vw',
+            fontWeight: '200',
             letterSpacing: '0.15em',
             whiteSpace: 'nowrap',
             display: 'inline-block'

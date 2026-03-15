@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { io } from 'socket.io-client';
 
 const TelemetryContext = createContext();
+
+const socket = io(import.meta.env.VITE_API_BASE || 'http://localhost:3001');
 
 export const TelemetryProvider = ({ children }) => {
   const [events, setEvents] = useState([]);
@@ -9,13 +12,36 @@ export const TelemetryProvider = ({ children }) => {
     successCount: 0,
     rejectedCount: 0,
     activeQueue: 0,
+    browsingUsers: 0,
+    checkingOutUsers: 0,
+    totalVisitors: 0,
     pendingPayments: [], // { id, ref, amount, productId, status, timestamp }
     stockRemaining: {
-      'void-hoodie': 12,
-      'vortex-kb': 8
+      'void-hoodie': 2,
+      'vortex-kb': 2
+    },
+    reservations: {
+      'void-hoodie': 0,
+      'vortex-kb': 0
     },
     rps: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   });
+
+  useEffect(() => {
+    socket.on('stats_update', (serverStats) => {
+      setMetrics(prev => ({
+        ...prev,
+        totalVisitors: serverStats.totalVisitors,
+        browsingUsers: serverStats.browsingUsers,
+        checkingOutUsers: serverStats.checkingOutUsers,
+        rejectedCount: serverStats.rejectedCount,
+        stockRemaining: serverStats.stock,
+        reservations: serverStats.reservations
+      }));
+    });
+
+    return () => socket.off('stats_update');
+  }, []);
 
   const pushEvent = useCallback((event) => {
     setEvents(prev => [
@@ -80,7 +106,7 @@ export const TelemetryProvider = ({ children }) => {
   }, []);
 
   return (
-    <TelemetryContext.Provider value={{ events, metrics, pushEvent, resetMetrics }}>
+    <TelemetryContext.Provider value={{ events, metrics, pushEvent, resetMetrics, socket }}>
       {children}
     </TelemetryContext.Provider>
   );

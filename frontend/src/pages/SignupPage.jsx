@@ -16,11 +16,32 @@ const SignupPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    // Simulate local DB persistence
     try {
-      await axios.post('http://localhost:3001/auth/register', { name, email, password });
-      navigate('/login');
+      const newUser = { 
+        id: `user_${Date.now()}`, 
+        name, 
+        email, 
+        password, 
+        phone: '+91 99999 00000' 
+      };
+      
+      const existingUsers = JSON.parse(localStorage.getItem('VEO_LOCAL_USERS') || '[]');
+      
+      if (existingUsers.find(u => u.email === email)) {
+        throw new Error('Email already exists');
+      }
+      
+      existingUsers.push(newUser);
+      localStorage.setItem('VEO_LOCAL_USERS', JSON.stringify(existingUsers));
+      
+      // Auto-login or redirect
+      setTimeout(() => {
+        navigate('/login');
+      }, 500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }

@@ -3,21 +3,59 @@ import { ShieldCheck, Cpu, Terminal, AlertTriangle, CheckCircle2, ChevronRight, 
 import { useTelemetry } from '../context/TelemetryContext';
 
 const CheckoutPage = ({ timeRemaining }) => {
-  const { pushEvent, metrics } = useTelemetry();
+  const { socket, pushEvent, metrics } = useTelemetry();
   const [step, setStep] = useState(0); 
+  const [isRejected, setIsRejected] = useState(false);
   const isLocked = timeRemaining > 0;
 
-  const formatTime = (totalSeconds) => {
-    const min = Math.floor(totalSeconds / 60);
-    const sec = totalSeconds % 60;
-    return `${min}:${sec.toString().padStart(2, '0')}`;
-  };
+  // For this logic, we'll assume they are checking out the first item in the cart
+  // or a default 'void-hoodie' if for some reason the cart is empty (direct link)
+  const productId = 'void-hoodie'; 
 
   useEffect(() => {
-    if (!isLocked) {
-      pushEvent({ type: 'CHECKOUT_START', productId: 'void-hoodie' });
+    if (!isLocked && socket) {
+      socket.emit('checkout_start', productId);
+
+      socket.on('checkout_accepted', (data) => {
+        setIsRejected(false);
+        pushEvent({ type: 'CHECKOUT_START', productId: data.productId });
+      });
+
+      socket.on('checkout_rejected', (data) => {
+        setIsRejected(true);
+        console.error('Reservation rejected:', data.reason);
+      });
+
+      return () => {
+        socket.emit('checkout_leave');
+        socket.off('checkout_accepted');
+        socket.off('checkout_rejected');
+      };
     }
-  }, [pushEvent, isLocked]);
+  }, [socket, isLocked, pushEvent, productId]);
+
+  if (isRejected) {
+    return (
+      <div className="checkout-container flex items-center justify-center text-[#1d1d1f]" style={{ minHeight: '80vh', background: '#fff' }}>
+        <div className="text-center p-12 bg-white rounded-[40px] border border-red-50 shadow-[0_32px_80px_-20px_rgba(255,0,0,0.1)] max-w-lg w-full mx-4">
+          <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-10 border border-red-100 animate-pulse">
+            <AlertTriangle size={48} />
+          </div>
+          <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight uppercase italic">Access_Denied</h2>
+          <p className="text-gray-500 text-lg mb-12 font-medium leading-relaxed">
+            All available units for <span className="font-black text-black">VOID HOODIE</span> are currently being processed by other nodes. 
+            Allocation failed.
+          </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="elliptical-btn w-full !bg-black !text-white h-20 !text-xl"
+          >
+            Back to Node Gallery
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLocked) {
     return (
@@ -47,9 +85,22 @@ const CheckoutPage = ({ timeRemaining }) => {
     );
   }
 
-  const [shippingData, setShippingData] = useState({ name: '', address: '', phone: '' });
+  const loggedInUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const [shippingData, setShippingData] = useState({ 
+    name: loggedInUser.name || '', 
+    address: '', 
+    phone: loggedInUser.phone || '+91 99999 00000' // Default demo phone
+  });
+
   const [orderId] = useState(`ORDER-${Math.random().toString(36).substring(7).toUpperCase()}`);
   const [orderRef] = useState(Math.random().toString(36).substring(2, 6).toUpperCase());
+
+  // If user is logged in, skip the 'Personal Info' step
+  useEffect(() => {
+    if (loggedInUser.name && step === 0) {
+      setStep(1);
+    }
+  }, [loggedInUser.name]);
 
   useEffect(() => {
     const currentOrder = metrics.pendingPayments.find(p => p.id === orderId);
