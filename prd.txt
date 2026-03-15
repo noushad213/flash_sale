@@ -1,0 +1,367 @@
+Below is a **structured Product Requirements Document (PRD)** suitable for a **hackathon problem like this**. It keeps the narrative tone of the prompt but converts it into **clear engineering requirements, constraints, and evaluation criteria**.
+
+---
+
+# Product Requirements Document (PRD)
+
+## Project: Midnight Product Drop — Flash Sale Commerce System
+
+---
+
+# 1. Background
+
+At exactly midnight a limited-quantity product is released.
+
+Within seconds **thousands of users attempt to purchase the same item simultaneously**.
+
+While the infrastructure may remain online, many systems fail in subtle ways:
+
+* Orders are created for products that no longer exist
+* Inventory becomes negative
+* Multiple users successfully purchase the same item
+* Payments succeed even though the product is unavailable
+* System instability causes inconsistent checkout behavior
+
+The goal of this project is to design a **flash-sale capable commerce platform** that can **safely handle extreme concurrency and limited inventory**.
+
+The system must remain stable while ensuring **strict purchase correctness**.
+
+---
+
+# 2. Problem Statement
+
+Design a commerce system capable of handling **massive simultaneous demand for extremely limited inventory**.
+
+When a product goes live:
+
+* Thousands of users attempt checkout at the same moment
+* Only a limited number of purchases are valid
+* The system must ensure **fair and correct allocation**
+
+The core challenge is designing a **gate mechanism** that guarantees:
+
+> No more purchases succeed than available inventory.
+
+Possible mechanisms include:
+
+* distributed locks
+* atomic database transactions
+* queue-based purchase processing
+* reservation tokens
+* concurrency control strategies
+
+The solution must **prevent race conditions under heavy load**.
+
+---
+
+# 3. Product Objectives
+
+### Primary Objectives
+
+1. Ensure **inventory correctness under extreme concurrency**
+2. Allow **only valid number of successful purchases**
+3. Reject unsuccessful buyers cleanly
+4. Maintain **system stability during massive traffic bursts**
+
+### Secondary Objectives
+
+1. Provide **fast checkout experience**
+2. Maintain **fair ordering of purchase attempts**
+3. Prevent **overselling**
+4. Provide **clear failure responses**
+
+---
+
+# 4. Target Users
+
+### Flash Sale Customers
+
+Users attempting to buy a limited item the moment it launches.
+
+Characteristics:
+
+* thousands arrive simultaneously
+* rapid purchase attempts
+* low patience for slow checkout
+
+### System Operators
+
+* monitor inventory
+* monitor traffic spikes
+* ensure platform stability
+
+---
+
+# 5. Core System Challenges
+
+The platform must address the following technical risks:
+
+| Risk              | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| Race Conditions   | Multiple users attempt checkout simultaneously |
+| Overselling       | More orders than available inventory           |
+| Double Payment    | Users pay even though item is unavailable      |
+| System Congestion | Sudden traffic spike                           |
+| Checkout Latency  | Slow purchase confirmation                     |
+
+---
+
+# 6. Key Functional Requirements
+
+## 6.1 Product Release Mechanism
+
+* Product becomes available at a **specific release time**
+* Before release time, purchase attempts must be blocked
+* At release time, product becomes purchasable
+
+---
+
+## 6.2 Purchase Attempt Handling
+
+When a user clicks **Buy Now**:
+
+The system must:
+
+1. Validate request
+2. Check product availability
+3. Attempt reservation
+4. Confirm purchase or reject
+
+Expected outcomes:
+
+| Scenario            | Result                  |
+| ------------------- | ----------------------- |
+| Inventory available | Purchase succeeds       |
+| Inventory exhausted | User receives rejection |
+| Payment delay       | Reservation timeout     |
+
+---
+
+## 6.3 Inventory Control
+
+Inventory must:
+
+* Never become negative
+* Always reflect real stock
+* Support extremely high read traffic
+
+Inventory updates must be **atomic**.
+
+---
+
+## 6.4 Checkout Concurrency Gate
+
+The system must implement a **mechanism that limits successful purchases**.
+
+Possible solutions include:
+
+* inventory decrement inside transaction
+* distributed lock
+* token reservation system
+* message queue ordering
+* atomic counter
+
+Regardless of implementation, the system must guarantee:
+
+> Successful purchases ≤ total inventory.
+
+---
+
+## 6.5 Order Creation
+
+When purchase succeeds:
+
+System must:
+
+1. Create order
+2. Deduct inventory
+3. lock item for payment
+4. confirm order
+
+---
+
+## 6.6 Payment Handling
+
+Payment should only occur if:
+
+* inventory has been successfully reserved
+
+If payment fails:
+
+* reservation must be released
+* inventory restored
+
+---
+
+## 6.7 Rejection Handling
+
+Users who fail to obtain the item must receive:
+
+* clear rejection message
+* no payment attempt
+* no order creation
+
+---
+
+# 7. Non-Functional Requirements
+
+## 7.1 High Concurrency Handling
+
+System must handle:
+
+* thousands of simultaneous requests
+* massive spike at release time
+
+System must remain stable.
+
+---
+
+## 7.2 Low Latency
+
+Checkout responses should occur within:
+
+**< 2 seconds preferred**
+
+---
+
+## 7.3 System Stability
+
+Under extreme traffic:
+
+* servers must not crash
+* requests should be throttled or queued if necessary
+
+---
+
+## 7.4 Data Consistency
+
+The system must maintain:
+
+* strong inventory consistency
+* correct order state
+
+---
+
+## 7.5 Graceful Failure
+
+If system overload occurs:
+
+* users should receive clean error messages
+* no inconsistent transactions
+
+---
+
+# 8. System Observability
+
+The system must allow monitoring of:
+
+* successful purchases
+* rejected purchases
+* inventory levels
+* system latency
+* failed payment attempts
+
+---
+
+# 9. Edge Cases
+
+The system must correctly handle:
+
+| Case                                    | Expected Behavior          |
+| --------------------------------------- | -------------------------- |
+| Multiple checkout attempts by same user | Prevent duplicate orders   |
+| Payment timeout                         | Release reserved inventory |
+| Server restart during checkout          | Maintain consistency       |
+| Extremely high request bursts           | Queue or throttle requests |
+
+---
+
+# 10. Success Criteria
+
+Observers will evaluate the system based on:
+
+### Inventory Consistency
+
+Inventory must **never go negative**.
+
+---
+
+### Correct Concurrent Behavior
+
+When many users checkout simultaneously:
+
+* only correct number succeed
+
+---
+
+### Burst Traffic Handling
+
+System must handle **sudden traffic spikes** without failure.
+
+---
+
+### Graceful Failure
+
+Unsuccessful users must receive **clean rejection responses**.
+
+---
+
+# 11. Evaluation Criteria (Hackathon Judging)
+
+Judges will evaluate:
+
+| Category           | Focus                                 |
+| ------------------ | ------------------------------------- |
+| Architecture       | Ability to handle massive concurrency |
+| Correctness        | No overselling                        |
+| Scalability        | Handles real-world flash sale traffic |
+| Reliability        | Handles failure scenarios             |
+| Engineering Design | Clear reasoning behind gate mechanism |
+
+---
+
+# 12. Expected Deliverables
+
+Teams should present:
+
+1. System architecture
+2. Concurrency control strategy
+3. Checkout flow design
+4. Failure handling strategy
+5. Load testing results (optional but strong)
+
+---
+
+# 13. Example System Flow
+
+```
+User Clicks Buy
+       ↓
+API receives request
+       ↓
+Concurrency Gate
+       ↓
+Inventory Check
+       ↓
+Reservation Created
+       ↓
+Order Created
+       ↓
+Payment Processed
+       ↓
+Success / Failure Response
+```
+
+---
+
+# 14. Key Insight
+
+The entire system depends on a **single fundamental guarantee**:
+
+> No matter how many users attempt checkout simultaneously, only the exact number of available products can ever be sold.
+
+This is the **core engineering challenge** of the Midnight Product Drop.
+
+---
+
+If you want, I can also give a **winning hackathon system architecture for this (Redis + Queue + Reservation tokens)** that solves this problem **cleanly and impresses judges**.
