@@ -76,9 +76,9 @@ const Navigation = ({ toggleCart, cartCount }) => {
         <div className="flex items-center gap-4">
           <div>
             {user ? (
-              <button onClick={handleLogout} className="nav-link font-bold">SIG_OUT</button>
+              <button onClick={handleLogout} className="nav-link font-bold">LOG_OUT</button>
             ) : (
-              <Link to="/login" className="nav-link" style={{ fontWeight: '700' }}>GATEWAY_AUTH</Link>
+              <Link to="/login" className="nav-link border border-black/20 px-8 font-extrabold hover:bg-black hover:text-white transition-all">LOGIN</Link>
             )}
           </div>
           <div className="flex items-center gap-4">
